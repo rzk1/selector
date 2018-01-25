@@ -117,7 +117,9 @@ The multipole expansion of intermolecular energies implies that POIDs can adequa
 The flexibility of the model \red is very high\old as it includes many-body beyond simple pairwise interactions through products 
 of POIDs.
 
-\textbf{Systems and training set.} Lennard-Jones model.
+\textbf{Systems and training set.} 
+
+%Lennard-Jones model.
 
 Two water molecules TIP3P.
 
@@ -135,31 +137,34 @@ Only training set is being using for fitting procedure and only test set is bein
 In order to analyze the efficiency of predicting algorithm, the number of observations can be reduced to required quantity. 
 Some algorithms require data standardization, so before doing anything we have to perform feature scaling for training set in order to have zero mean and unit variance for each feature.
 
-\begin{table*}
-\caption{Systems and models}\label{Tab:ZZZ}
-\begin{tabular*}{\textwidth}{c @{\extracolsep{\fill}} lccc}
-%\begin{tabular}{l*{6}{c}r}
-\hline
-System & A & B & C \\
-\hline
-Github nickname & datafileN.x &  &  \\
-\hline
-$G$ & 1 & 1 & 2 \\
-\hline
-$M_1$ &  &  &  \\
-\hline
-$M_2$ & 0 & 0 & \\
-\hline
-Chemical composition & (H$_2$O)$_2$ & (H$_2$O)$_2$ & (H$_2$O)$_3$ \\
-\hline
-No. of unique features & & & \\
-\hline
-Ref. energy & TIP3P & MP2 &  BLYP/PBE-D3/TZVP \\
-\hline
-Configurations & Grid & Random with $R_{OO}$ bins & ZZZ \\
-\hline
-\end{tabular*}
-\end{table*}
+[Related to Models] For three water molecules where we have 9 atoms the total number of 
+distances = 9$^{2}$/2 - 9/2 = 36. Using same set of powers (M$_{1
+}$=15 and M$_{2}$=7) without feature reduction we would have 
+540+17640=18180 features. However, reducing the number of features using 
+the describe above technique and discarding all intramolecular distances 
+the reduced number of features decreases to only 45+630=675 which is 
+much more convenient and manageable for fitting.
+
+[Related to Models] However, calculation of variance influence factors showed that there 
+exists very strong multicollinearity between features which indicates 
+that products must be included in the model. Similarly, to single 
+distances model, if M$_{1}$=0 and M$_{2}$=1, set contains 22 
+features and new model has in overall 22+5=27 features. Another 
+assumption that has been made that our function depends only on 
+intermolecular distances. After performing several fitting procedures 
+this assumption has been confirmed by results since fitting algorithm 
+discards them almost in all cases. This fact allowed us to reduce the 
+number of features even more. To get reasonable fit, the number of 
+powers must be increased which will increase the number of features. For 
+the model with M$_{1}$=15 and M$_{2}$=7 the number of features 
+is 45+245=290 which is more than acceptable for fitting. Without 
+performing feature reduction, we would have in total 225+2940=3165 
+features (this number of features is the same order of magnitude as that 
+of ANNs-based MLPs). In case of two water molecules reasonable fit could 
+be obtained using only single distances. However, if we have three water 
+molecules, the full model should be used since the simplified one cannot 
+give accurate fit. 
+
 
 \textbf{Training procedure.} In this model, POIDs and their products serve as \textit{features}. 
 To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters (i.e. linear coefficients in our case) to produce the best fit. 
@@ -287,34 +292,6 @@ how the goodness of the fit depends on the number of predictors.
 
 \section{Results and discussion}
 
-For three water molecules where we have 9 atoms the total number of 
-distances = 9$^{2}$/2 - 9/2 = 36. Using same set of powers (M$_{1
-}$=15 and M$_{2}$=7) without feature reduction we would have 
-540+17640=18180 features. However, reducing the number of features using 
-the describe above technique and discarding all intramolecular distances 
-the reduced number of features decreases to only 45+630=675 which is 
-much more convenient and manageable for fitting.
-
-However, calculation of variance influence factors showed that there 
-exists very strong multicollinearity between features which indicates 
-that products must be included in the model. Similarly, to single 
-distances model, if M$_{1}$=0 and M$_{2}$=1, set contains 22 
-features and new model has in overall 22+5=27 features. Another 
-assumption that has been made that our function depends only on 
-intermolecular distances. After performing several fitting procedures 
-this assumption has been confirmed by results since fitting algorithm 
-discards them almost in all cases. This fact allowed us to reduce the 
-number of features even more. To get reasonable fit, the number of 
-powers must be increased which will increase the number of features. For 
-the model with M$_{1}$=15 and M$_{2}$=7 the number of features 
-is 45+245=290 which is more than acceptable for fitting. Without 
-performing feature reduction, we would have in total 225+2940=3165 
-features (this number of features is the same order of magnitude as that 
-of ANNs-based MLPs). In case of two water molecules reasonable fit could 
-be obtained using only single distances. However, if we have three water 
-molecules, the full model should be used since the simplified one cannot 
-give accurate fit. 
-
 The last part summarizes results in report file which include n models 
 with corresponding fitting coefficients and creates plots that represent 
 prediction of each model using only test set. It also compares our fit 
@@ -325,7 +302,33 @@ distance max power M$_{1}$ from (3) value 15 will be sufficient. For
 features that contain product of distances max power M$_{2}$ from (4) 
 equal to 7. Increasing those number to greater value does not give any 
 significant improvement, but augments number of features and slow down 
-the fitting procedure.
+the fitting procedure. Table~\ref{Tab:systems}.
+
+\begin{table*}
+\caption{Systems and models}\label{Tab:systems}
+\begin{tabular*}{\textwidth}{l @{\extracolsep{\fill}} ccccc}
+%\begin{tabular}{l*{6}{c}r}
+\hline
+System & A & B1 & B2 & C & D\\
+\hline
+Github nickname & set2.x & set6.x & set6.x & set4.x & \\
+\hline
+$G$ & 1 & 1 & 2 & 2 & \\
+\hline
+$M_1$ & 15 & 15 & 15 & 15 & \\
+\hline
+$M_2$ & 0 & 0 & 7 & 7 & \\
+\hline
+Chemical composition & (H$_2$O)$_2$ & (H$_2$O)$_2$ & (H$_2$O)$_2$ & (H$_2$O)$_3$ & \\
+\hline
+No. of unique features & & & & &\\
+\hline
+Ref. energy & TIP3P & MP2 & MP2  & BLYP+D/mo-TZV2P & \\
+\hline
+Configurations & Grid & $R_{OO}$ bins & $R_{OO}$ bins & AIMD\\
+\hline
+\end{tabular*}
+\end{table*}
 
 Refer to SI for a discussion of LASSO - a special case of EN.
 
@@ -335,11 +338,14 @@ improvement 10\% - 20\% can be achieved if we use GA for obtaining
 initial subset. If we use EN, this improvement can be even greater since 
 EN works faster than GA but gives worst results.
 
-\subsection{Simple models}
+%RZK: do we learn anything from this simple model?
+%\subsection{System 0: Lennard-Jones potential?}
 
-Test models first. Lennar-Jones. TIP3P water.
+\subsection{System A: TIP3P water dimer}
 
-\subsection{Two water molecules}
+We would like to show that our algorithm recovers the correct analytical equation from [sparse?] data.
+
+\subsection{System B: water dimer}
 
 \red Use {\textbackslash}label and {\textbackslash}ref to keep track of numbering. All figures should be in the vector format. EPS is the best format. Font in figures must be as large the font in figure caption. Remove caption from the figure. All physical quantities must have labels. Energy units are kJ$\cdot$mol$^{-1}$. 1 hartree = 2625.499638~kJ$\cdot$mol$^{-1}$. \old
 
@@ -350,7 +356,7 @@ number of predictors obtained by modeling equations (4) and (5).
 
 \begin{figure}
 %\includegraphics[width=0.45\textwidth]{media/image5.eps}
-\caption{\red (Fig. 4.) Model X with $G=1$. Combine R2 and RMSE in one plot using left and right y-axes (or choose just one of the two). \old} \label{Fig:ZZZ}
+\caption{\red (Fig. 4.)\old Dependence of RMSE (and R$^2$) on the number of feature selected with EN/GA? for System X. \red Combine R2 and RMSE in one plot using left and right y-axes (or choose just one of the two). \old} \label{Fig:ZZZ}
 \end{figure}
 
 Fig. 3 and 4 show the relationship between root of mean squared error 
@@ -366,17 +372,17 @@ about the model
 %{ccc}
 %\begin{tabular}{l*{6}{c}r}
 \hline
-Distance & Power & Coefficient \\
+Distance & Power, $n$ & Coefficient, $h\cdot\AA^n$ \\
 \hline
-O-O & -12 & 470.76 \\
+O-O & 12 & 470.76 \\
 \hline
-O-H & -1 & -0.11866 \\
+O-H & 1 & -0.11866 \\
 \hline
-O-O & -1 & 0.23203 \\
+O-O & 1 & 0.23203 \\
 \hline
-H-H & -1 & 0.060300 \\
+H-H & 1 & 0.060300 \\
 \hline
-H-H & -5 & 0.022497 \\
+H-H & 5 & 0.022497 \\
 \hline
 \end{tabular*}
 \end{table}
