@@ -1,0 +1,748 @@
+\documentclass[aps,prl,reprint,amsmath,amssymb,nature]{revtex4-1}
+
+% define variable that compiles the main text (as opposed to SI text)
+\newcommand*{\MAINTEXT}{}
+
+\usepackage{epsfig,color,graphicx}
+
+\begin{document}
+\newcommand{\Ang}{\ensuremath{\mathring{\text{A}}}}
+\newcommand{\red}{\color{red}}
+\newcommand{\blue}{\color{blue}}
+\newcommand{\old}{\color{black}}
+
+\bibliographystyle{naturemag}
+
+%\ifdefined\MAINTEXT
+%\else
+%	\clearpage
+%	%\widetext
+%	\setcounter{figure}{0}
+%	\setcounter{page}{1}
+%	\renewcommand{\thefigure}{S\arabic{figure}}
+%\fi
+
+\title{
+\ifdefined\MAINTEXT
+\else
+Supplementary Information: \\
+\fi
+Machine learns the physics of intermolecular interactions
+}
+
+\author{Volodymyr Sakun}
+\affiliation{Department of Civil Engineering, McGill University, 817 Sherbrooke St. West, Montreal, QC H3A 0C3, Canada}
+\author{Rustam Z. Khaliullin}
+\email{rustam.khaliullin@mcgill.ca}
+\affiliation{Department of Chemistry, McGill University, 801 Sherbrooke St. West, Montreal, QC H3A 0B8, Canada}
+
+\date{\today}
+
+\ifdefined\MAINTEXT
+
+\begin{abstract}
+\red Abstract is to be written once we finish the main text. Many journals have a 150-word limit on abstract. 
+IMO, best abstracts contain no more than 5 sentences. \old
+\end{abstract}
+
+\maketitle
+
+
+\section{Introduction}
+
+Machine learning shows enormous promise for modeling of materials and molecules. 
+One rapidly growing area of its application is the development of interatomic potentials -- functions that describe the dependence of the interaction energy between atoms on their positions. 
+In the last decade, several approaches based on artificial neural networks (ANNs) and Gaussian process regression (GPR) have been 
+developed to ``lear'' interatomic potentials from accurate quantum mechanical data. 
+The main advantage of machine-learned potentials (MLPs) is that they combine the high accuracy of quantum mechanical description 
+of interaction between atoms with the computational efficiency of human-derived analytical potentials. 
+This rare combination of accuracy and cost has enabled high-quality MLP-based simulations of complex materials on unprecedented time and length scales. 
+
+The high accuracy of MLPs is the result of very flexible form of the fitting function that allows the algorithm, first, to reproduce the 
+known energy of the training points and then \textit{interpolate} between them. 
+Unfortunately, the accuracy of the existing MLPs comes with poor transferability, which stems from the inability of machine-learning algorithms to \textit{extrapolate} the energy to the atomistic configurations that deviate somewhat from those included in 
+the training set. 
+Our experience with ANN potentials shows that even minor deviations from the training set lead to dramatic failures in 
+predicted energies. 
+\red For example, ANN trained to reproduce the energy of the diamond phase of carbon. \old
+It is also extremely challenging for MLPs to predict accurate energies of crystal phase by training MLA on the energies of random liquid-like configurations. 
+
+The focus of this work is to improve transferability of MLPs without compromising their flexibility and thus accuracy. 
+To achieve this ambitious goal, we developed a different approach to learning interatomic potentials. 
+The key idea of this methodology \red presented here \old is to let the algorithm select, out of a multitude of physically appropriate functions, only those few that reproduce the training data best. 
+A large number of trial functions, called features here, ensures the flexibility and accuracy of the fit. 
+The transferability is improved by including only few necessary and physically appropriate features and keeping the final energy expression as simple as possible. 
+An additional advantage of this approach is that the final energy expression is very simple and, in many cases, resemble analytical equations that describe basic physical laws.
+
+Many components of this method have been used in many existing learning algorithms that construct MLPs. 
+For example, ANNs use a large number of simple sigmoid functions to ensure high accuracy of the fit. 
+However, sigmoid functions are not natural for describing the physics of interactions between atoms and an accurate fit requires too many of them \red to stay transferable. \old
+GPR, which is equivalent to kernel ridge regression, include a build-in penalty that favors simpler expressions. 
+Unfortunately, the nonparametric energy expression of GPR is not constrained to physically relevant functions. 
+This work is an attempt to include all the necessary components into PES-fitting MLA: highly-flexible and physically motivated fitting functions as well as a mechanism that keeps it simple. 
+To demonstrate utility of the idea, we consider only intermolecular interactions and feature selection with features that depend linearly on their parameters.
+
+While the existing machine learning methods completely ignore physical origins of interactions between atoms and just ``mimic'' the shape of a complex interatomic potentials, this algorithm is designed to constructs a physically motivated analytical equation that can properly describe materials outside the limits of training set. 
+\red Early attempts to improve the transferability of MLP include: using MLA as coordinate-dependent parameters in a fixed analytical potential. 
+While improving the transferability of MLPs and a range of applications this approach leads to significantly reduced flexibility.\old
+
+
+\section{Methodology}
+
+\red Short description of the general methodology with only basic equations and motivation behind them. All examples related to a specific model (e.g. water) will be presented in Results and Discussion. Description of the code (not be confused with algorithm) should be moved to the Supplementary Information. All results should be presented in Results and Discussion, unless they are necessary to understand our methodology. \old
+
+This expression also satisfies another important physical constraints: it makes energy invariant to translations and rotations of the entire molecular system. 
+
+For any system, the potential energy as a function of interatomic distances satisfies two constraints: it approaches zero when all atoms are infinitely far from each other and it becomes infinite as the distance between any two atoms approaches zero.
+%
+\begin{eqnarray}
+\lim_{\forall R_i \rightarrow \infty} E (\mathbf{R}) = 0 \\
+\lim_{R_i \rightarrow 0} E (\mathbf{R}) = \infty
+\end{eqnarray}
+
+We chose powers of inverse distances (POIDs) as a set of [features] because their sum can easily satisfy these two very general physical constraints:
+\begin{eqnarray}
+E (&R_1&, R_2, \ldots, R_N) = \sum_{k=1}^{M_1} \sum_{p=1}^{N} \frac{c_{pk}}{R_p^k} + \sum_{k,m=1}^{M_2} \sum_{p>q}^{N} \frac{c_{pkqm}}{R_p^k R_q^m} + \nonumber \\
+&+& \ldots +\sum_{k,m,n=1}^{M_G} \sum_{p>q>r}^{N} \frac{c_{pkqm\ldots rn}}{R_p^k R_q^m \ldots R_r^n} \equiv \mathbf{f}\cdot \mathbf{c}
+\end{eqnarray}
+%
+where $N = \frac{1}{2}A(A-1)$ is the number of distances $R$ between $A$ atoms, M$_{g}$ is the maximum power for a term containing the product of $g$ distances, $G$ is the maximum ZZZ, $\mathbf{c}$ is the vector of tunable coefficients, $\mathbf{f}$ is the vector of features. 
+\red To make training flexible/ bonds are classified as intermolecular and intramolecular. \old 
+In order to account for the equivalence of atoms of the same element and to make sure that the energy is invariant to permutation of atoms in the input, the fitting coefficients for the physically equivalent features are restricted to be equal. 
+Taking this symmetry into account allows to decrease the number of independent features in the model and training time substantially. 
+For example, the energy of two water molecules depends on 15 distances, only five of which are unique: oxygen-oxygen, intermolecular oxygen-hydrogen, intramolecular oxygen-hydrogen, intermolecular oxygen-hydrogen, intramolecular hydrogen-hydrogen.
+
+Despite satisfying a variety of constraints, expression (3) remains very general. 
+The multipole expansion of intermolecular energies implies that POIDs can adequately represent a wide variety of intermolecular potentials. 
+The flexibility of the model \red is very high\old as it includes many-body beyond simple pairwise interactions through products 
+of POIDs.
+
+\textbf{Systems and training set.} Lennard-Jones model.
+
+Two water molecules TIP3P.
+
+Two water molecules, MP2.
+
+Two-molecule and three-molecule water models, with geometries obtained 
+from AIMD.
+
+First of all, the data must contain enough records to cover all possible arrangements that exist in real life. 
+In other words, data must contain enough configurations with varying potential from highest in absolute value to zero. 
+Another requirement is that data must be sparse and should have equal records for each representative bin, which is in our 
+case average distance between centers of masses. 
+So, first part of the algorithm takes required amount of records for each interval and that separates training set and test set. 
+Only training set is being using for fitting procedure and only test set is being using for predicting and evaluating the accuracy of the fit and visualizing results. 
+In order to analyze the efficiency of predicting algorithm, the number of observations can be reduced to required quantity. 
+Some algorithms require data standardization, so before doing anything we have to perform feature scaling for training set in order to have zero mean and unit variance for each feature.
+
+\begin{table*}
+\caption{Systems and models}\label{Tab:ZZZ}
+\begin{tabular*}{\textwidth}{c @{\extracolsep{\fill}} lccc}
+%\begin{tabular}{l*{6}{c}r}
+\hline
+System & A & B & C \\
+\hline
+Github nickname & datafileN.x &  &  \\
+\hline
+$G$ & 1 & 1 & 2 \\
+\hline
+$M_1$ &  &  &  \\
+\hline
+$M_2$ & 0 & 0 & \\
+\hline
+Chemical composition & (H$_2$O)$_2$ & (H$_2$O)$_2$ & (H$_2$O)$_3$ \\
+\hline
+No. of unique features & & & \\
+\hline
+Ref. energy & TIP3P & MP2 &  BLYP/PBE-D3/TZVP \\
+\hline
+Configurations & Grid & Random with $R_{OO}$ bins & ZZZ \\
+\hline
+\end{tabular*}
+\end{table*}
+
+\textbf{Training procedure.} In this model, POIDs and their products serve as \textit{features}. 
+To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters (i.e. linear coefficients in our case) to produce the best fit. 
+The training procedure includes two stages: feature selection and fine-tuning. 
+\red The second part is the improvement of the subset performed using correlation analysis (CA) and searching for alternate features. \old
+
+$[$OLS$]$. Main equation. Why is OLS bad algorithm for fitting?
+
+We explored the applicability of two methods to perform feature 
+selection: elastic net regularization (EN) and genetic algorithm (GA). 
+While both algorithms produce almost identical results the advantage of 
+$[$the?$]$ genetic algorithm is that it can be easily generalized to 
+features with nonlinear fitting coefficients (e.g. exponentially 
+decaying functions can be included in the feature list later).
+
+\textit{Elastic net}. Basic idea and main equation
+
+As it was mentioned if there is a group of highly correlated variables, 
+then the LASSO selects just one variable from a group and drop the 
+others. This is not convenient because in our case LASSO can drop 
+important features while keeping less important one. EN can overcome 
+this problem since it contains two penalties: linear and quadratic. By 
+adjusting the two regularization factors, it is possible to force EN to 
+keep dependent features in the model. Later the unnecessary features 
+will be removed by another algorithm. Therefore, EN allows to reduce the 
+number of features from thousands to hundreds or even less. Next step is 
+to reduce the number of features decreased by EN to desired value. It 
+can be done by the backwards elimination algorithm (BE), which removes 
+the feature Basically, BE removes the worst (less significant feature), 
+one at a time, based on criterion provided by fitness function \textit{
+F} until the desired number of features is reached:
+
+\textit{F = }
+
+ Since after the reduction of number of features by EN the number of 
+observations is much greater than number of variables, so we can use 
+ordinary least squares (OLS) as a fitness function and the criterion 
+would be minimum squared error (MSE). BE can be used for linear and 
+nonlinear features; the only difference is different fitness functions.
+
+\textit{Genetic algorithm.}\textbf{ }Very general description of GA. 
+Population of chromosomes improved by iterative mutations and 
+corssovers.
+
+We used classic genetic algorithm to select best subset of features from 
+the initial set. Since the number of desired selected features is 
+relatively small and for our model does not exceeds 20 features OLS can 
+be used as a fitness function. GA contains many parameters that can be 
+varied in order to achieve better performance and faster convergence. 
+Population size, chromosome size, mutation probability, elite fraction 
+(fraction of good chromosomes), mutation fraction / crossover fraction, 
+mutation methods: correlated or random, crossover method: random or 
+best. Stopping criteria are elapsed time, number of iterations and 
+tolerance. 
+
+The main difference from classic GA is that mutation function replaces 
+randomly selected feature with alternate feature from correlation list. 
+The procedure of obtaining lists of alternate features will described in 
+the next two sections.
+
+\textit{Fine-tuning ZZZ.} The second stage of the training processes 
+is designed to deal with strong multicollinearity between features. 
+Since our goal is to reduce the number of POIDs in the fitting function, 
+most common methods of dealing with linear dependent features such as 
+principal component analysis are not applicable. We designed a procedure 
+for eliminating/adding/replacing collinear features with two goals: 
+compact and accurate. 
+
+focused on eliminating collinear variables in such a way that final fit 
+will contain only one feature for each collinear group. It is not the 
+ideal representation but it allows us having good enough fit minimize 
+number of variables that would give a compact energy equation. To find 
+out how a linear correlation between all our features we calculated 
+the correlation matrix (i.e. matrix of Pearson correlation coefficients). Next step is to 
+create a list of dependent features for each variable using threshold 
+MinCorrelation between 0 and 1 for cut off. If correlation between two 
+features is greater than MinCorrelation they are considered to be 
+linearly dependent. Suppose we have only 5 features and our correlation 
+matrix looks like in Fig. 1. If we set MinCorrelation = 0.8 than 
+Variable X1 will have a list of dependent variables $[$X2, X3$]$, X2 
+will have $[$X1, X3$]$, X3=$>$ $[$X1, X2$]$, X4 and will have empty 
+lists that means they are linearly independent within chosen tolerance. 
+The closer MinCorrelation to zero - the greater list of dependent 
+variables. 
+
+Its goal is keeping the number of predictors find the best subset of 
+features that gives lowest MSE. BF uses list of dependent variables 
+described above and tries to choose alternate features that are related 
+to the original ones but gives better fit. Algorithm description. 
+Algorithm stops if for any feature from the selected subset no better 
+alternatives was found. Since the subset contains only 20 or less 
+features in our case the algorithm works relatively fast. Its speed 
+depends on MinCorrelation variable that influence the formation of 
+alternate features lists. The closer this variable to 0 the greater 
+lists and the lower performance. 
+
+\textbf{Final stage. }At this stage, we have few features that were 
+previously selected by either EN or GA. In case of GA this number can be 
+strict since it is equal to chromosome size assigned in GA. For EN this 
+number can be equal to desired value only approximately by varying 
+regularization strength of L1 portions of EN. Let's say we have 20 
+preselected features from GA. The first goal of final fit is to improve 
+MSE by replacing selected features which can have linearly dependent 
+alternatives and are not selected. Second goal if this procedure is to 
+have 20 sets of different features with number of predictors decreasing 
+from 20 to 1 in order to see how the goodness of the fit is getting 
+worth with decreasing number of predictors which can give a possibility 
+to analyze the remaining features and to try to give them physical 
+interpretation. The loop has few steps:
+
+\newcounter{numberedCntH}
+\begin{enumerate}
+\item Improve the fit keeping the number of predictors (BF)
+\item Save best possible fit for future analysis
+\item Remove worst feature from feature set defined by fitness function: 
+worst feature is the one that gives smallest change in score after 
+removing (BE)
+\item Check if number of predictors is greater than 2, otherwise stop
+\setcounter{numberedCntH}{\theenumi}
+\end{enumerate}
+At the end of final stage, we have n sets of linear or exponential 
+predictors with decreasing number from n to 2. As a result, we can see 
+how the goodness of the fit depends on the number of predictors.
+
+
+\section{Results and discussion}
+
+For three water molecules where we have 9 atoms the total number of 
+distances = 9$^{2}$/2 - 9/2 = 36. Using same set of powers (M$_{1
+}$=15 and M$_{2}$=7) without feature reduction we would have 
+540+17640=18180 features. However, reducing the number of features using 
+the describe above technique and discarding all intramolecular distances 
+the reduced number of features decreases to only 45+630=675 which is 
+much more convenient and manageable for fitting.
+
+However, calculation of variance influence factors showed that there 
+exists very strong multicollinearity between features which indicates 
+that products must be included in the model. Similarly, to single 
+distances model, if M$_{1}$=0 and M$_{2}$=1, set contains 22 
+features and new model has in overall 22+5=27 features. Another 
+assumption that has been made that our function depends only on 
+intermolecular distances. After performing several fitting procedures 
+this assumption has been confirmed by results since fitting algorithm 
+discards them almost in all cases. This fact allowed us to reduce the 
+number of features even more. To get reasonable fit, the number of 
+powers must be increased which will increase the number of features. For 
+the model with M$_{1}$=15 and M$_{2}$=7 the number of features 
+is 45+245=290 which is more than acceptable for fitting. Without 
+performing feature reduction, we would have in total 225+2940=3165 
+features (this number of features is the same order of magnitude as that 
+of ANNs-based MLPs). In case of two water molecules reasonable fit could 
+be obtained using only single distances. However, if we have three water 
+molecules, the full model should be used since the simplified one cannot 
+give accurate fit. 
+
+The last part summarizes results in report file which include n models 
+with corresponding fitting coefficients and creates plots that represent 
+prediction of each model using only test set. It also compares our fit 
+with gaussian process fit accomplished using the same training set. In 
+order to have manageable number of features we have to restrict max 
+power to some reasonable number. Our experiments show that for single 
+distance max power M$_{1}$ from (3) value 15 will be sufficient. For 
+features that contain product of distances max power M$_{2}$ from (4) 
+equal to 7. Increasing those number to greater value does not give any 
+significant improvement, but augments number of features and slow down 
+the fitting procedure.
+
+Refer to SI for a discussion of LASSO - a special case of EN.
+
+To results: However, in the fine-tuning algorithm makes greater 
+improvement of the fitting. Usually, using MinCorrelation = 0.8 
+improvement 10\% - 20\% can be achieved if we use GA for obtaining 
+initial subset. If we use EN, this improvement can be even greater since 
+EN works faster than GA but gives worst results.
+
+\subsection{Simple models}
+
+Test models first. Lennar-Jones. TIP3P water.
+
+\subsection{Two water molecules}
+
+\red Use {\textbackslash}label and {\textbackslash}ref to keep track of numbering. All figures should be in the vector format. EPS is the best format. Font in figures must be as large the font in figure caption. Remove caption from the figure. All physical quantities must have labels. Energy units are kJ$\cdot$mol$^{-1}$. 1 hartree = 2625.499638~kJ$\cdot$mol$^{-1}$. \old
+
+In this part, we focus on two water molecules model. First of all, we 
+need to analyze how MSE of the function obtained from fitting procedure 
+depends on number of predictors. We have two functions with varying 
+number of predictors obtained by modeling equations (4) and (5). 
+
+\begin{figure}
+%\includegraphics[width=0.45\textwidth]{media/image5.eps}
+\caption{\red (Fig. 4.) Model X with $G=1$. Combine R2 and RMSE in one plot using left and right y-axes (or choose just one of the two). \old} \label{Fig:ZZZ}
+\end{figure}
+
+Fig. 3 and 4 show the relationship between root of mean squared error 
+(RMSE) and adjusted R2 vs. number of predictors modeled by equation (3). 
+Training set covers all region. Looking at Fig. 3 and 4 we might be 
+interested in results where we have 5 predictors. Looking at detailed 
+description (Fig. 5 and 6) that summarizes all relevant information 
+about the model
+
+\begin{table}
+\caption{Table 1. Final five-feature fit for system ZZZ obtained with GA/EN.}\label{Tab:ZZZ}
+\begin{tabular*}{0.45\textwidth}{c @{\extracolsep{\fill}} ccc}
+%{ccc}
+%\begin{tabular}{l*{6}{c}r}
+\hline
+Distance & Power & Coefficient \\
+\hline
+O-O & -12 & 470.76 \\
+\hline
+O-H & -1 & -0.11866 \\
+\hline
+O-O & -1 & 0.23203 \\
+\hline
+H-H & -1 & 0.060300 \\
+\hline
+H-H & -5 & 0.022497 \\
+\hline
+\end{tabular*}
+\end{table}
+
+Data from Table 1 is nothing else but formula that describes energy for 
+two water molecules system. According to Fig. 1 and considering that 
+physically equivalent distances have the same fitting coefficients it 
+can be summarized in one simple formula:
+
+Terms with power -1 look like Coulombs law. We have only one negative 
+coefficient in front of O-H bond, the rest are positive. The goodness of 
+this fit is summarized in Table 2
+
+\begin{center}Table 2\end{center}
+
+\begin{center}\textit{Parameters that describe goodness of fit 
+represented by (5)}\end{center}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|l|l|l|l|}
+\hline
+\textbf{MSE Train} & \textbf{RMSE Train} & \textbf{R2 Train} & 
+\textbf{R2 Adjusted Train} & \textbf{MSE Test} & \textbf{RMSE Test
+} & \textbf{R2 Test} & \textbf{R2 Adjusted Test} \\
+\hline
+4.01E-07 & 0.000633 & 0.92285 & 0.922759 & 4.13E-07 & 0.000643 & 
+0.949011 & 0.94877 \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\begin{figure}[h]
+\centering
+%\includegraphics[width=0.45\textwidth]{media/image10.eps}
+\caption{Fig. 6. $G=2$.} \label{Fig:dipoledist}
+\end{figure}
+
+
+After performing fitting using full features set according to (4) we 
+obtained similar graphs that represents relationship between RMSE or R2 
+and number of predictors. If we take a closer look at details of fit 
+with 5 predictors we could observe that the goodness of fit if better. 
+The algorithm chose 4 out of 5 features that contain product of 
+distances which signifies that they are not completely independent and 
+there exists some relationship between them.
+
+
+\begin{table}[h]
+\caption{Table 3. Coefficients for (4) with bond descriptions and corresponding number of distances and powers}
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+\textbf{Bond 1} & \textbf{Power 1} & \textbf{Bond 2} & \textbf{
+Power 2} & \textbf{Number of distances in feature} & \textbf{
+Coefficients} \\
+\hline
+H-H & -2 & � & � & 4 & 0.171764693 \\
+\hline
+O-O & -1 & H-H & -1 & 4 & 0.180766608 \\
+\hline
+O-O & -6 & O-H & -4 & 4 & 23.07894762 \\
+\hline
+O-H & -1 & H-H & -1 & 8 & -0.213562728 \\
+\hline
+O-H & -1 & H-H & -1 & 8 & 0.036990729 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\caption{Table 4. Parameters that describe goodness of fit with coefficients from Table 3}
+\begin{tabular}{|l|l|l|l|l|l|l|l|}
+\hline
+\textbf{MSE Train} & \textbf{RMSE Train} & \textbf{R2 Train} & 
+\textbf{R2 Adjusted Train} & \textbf{MSE Test} & \textbf{RMSE Test
+} & \textbf{R2 Test} & \textbf{R2 Adjusted Test} \\
+\hline
+1.68E-07 & 0.00041 & 0.973192 & 0.97316 & 1.65E-07 & 0.000406 & 0.960991 
+& 0.960807 \\
+\hline
+\end{tabular}
+\end{table}
+
+
+It should be mentioned that last two rows in table 3 represent different 
+pairs of distances. There are 7 types of pairs of distances applicable 
+to this model and they will be described later. 
+
+Another interesting aspect is to compare our results with Gaussian 
+process. At the same time, we have to investigate one of our goals: can 
+our algorithm predict in regions where there are no training points, in 
+other words can we use it to interpolate and extrapolate. To do this we 
+removed training points from some regions. In the following example 
+simulation will be performed in the region where average distance 
+between center of masses of two water molecules spans $[$2.4 .. 15$]$ 
+angstrom. However, we removed all data in region $[$5 .. 7$]$ angstrom 
+to see how interpolation works and at the edge region $[$9 .. 15$]$ 
+angstrom to observe extrapolation. It has to mentioned that we kept test 
+points in entire region $[$2.4 .. 15$]$ angstrom. In addition, predicted 
+values of energy obtained by Gaussian process are to be compared with 
+our method. 
+
+\begin{figure}[h]
+\centering
+%\includegraphics[width=0.45\textwidth]{media/image12.eps}
+\caption{Fig. 8. \textit{Average bin error vs. average distance between centers 
+of masses. Two water molecules model. Single distance features from (3) 
+with 7 predictors and Gaussian Process. Trained regions $[$2.4..5$]$, 
+$[$7..9$]$ angstrom, test region $[$2.4..15$]$ angstrom}}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+%\includegraphics[width=0.45\textwidth]{media/image13.eps}
+\caption{Fig. 9. Average energy per bin vs. average distance between 
+centers of masses. Two water molecules model. True energy plot. Single 
+distance features from (3) with 7 predictors and Gaussian Process. 
+Trained regions $[$2.4..5$]$, $[$7..9$]$ angstrom, test region 
+$[$2.4..15$]$ angstrom}
+\end{figure}
+
+Fig. 8 and 9 clearly show that in trained region $[$5..7$]$ both 
+algorithms give pretty well prediction where error is relatively small 
+and predicted energy almost identical with true energy. In the 
+$[$2.4..5$]$ angstrom region error is greater as well as deviation of 
+predicted energy since on short distances the behavior of two water 
+molecules system is much more complex and true energy function has more 
+complex shape. However, if we examine two regions where there are no 
+training points we can see a big difference in prediction. Our linear 
+model is still good: predicted energy values are close to true energy 
+and level of the error is almost the same as in adjacent trained region. 
+Gaussian process behaves differently: error goes up and values of 
+predicted energy also higher, especially et the edge region $[$9..15$]$ 
+angstrom. It can be observed from histogram on Fig. 10 that error 
+distribution is reasonable since the most frequently occurred error 
+values are close to zero.
+
+\begin{figure}[h]
+\centering
+%\includegraphics[width=0.45\textwidth]{media/image14.eps}
+\caption{Fig. 10. Absolute error histogram for function with 7 
+predictors modeled by genetic algorithm according to (3). Two water 
+molecules model. Trained regions $[$2.4..5$]$, $[$7..9$]$ angstrom, test 
+region $[$2.4..15$]$ angstrom.}
+\end{figure}
+
+Similarly, to those results Fig. 11, 12, 13 represent the model 
+according to (4) with 6 predictors and the same other parameters. The 
+fit is even better than if we used eq. (3), but general behavior is 
+similar.
+
+\begin{figure}[h]
+\centering
+%\includegraphics[width=0.45\textwidth]{media/image15.eps}
+\caption{Fig. 11. Average bin error vs. average distance between centers 
+of masses. Two water molecules model. Single distance features from (4) 
+with 6 predictors and Gaussian Process. Trained regions $[$2.4..5$]$, 
+$[$7..9$]$ angstrom, test region $[$2.4..15$]$ angstrom}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+%\includegraphics[width=0.45\textwidth]{media/image16.eps}
+\caption{Fig. 12. Average energy per bin vs. average distance between 
+centers of masses. Two water molecules model. True energy plot. Single 
+distance features from (4) with 6 predictors and Gaussian Process. 
+Trained regions $[$2.4..5$]$, $[$7..9$]$ angstrom, test region 
+$[$2.4..15$]$ angstrom}
+\end{figure}
+
+
+\begin{figure}[h]
+\centering
+%\includegraphics[width=0.45\textwidth]{media/image17.eps}
+\caption{Fig. 13. Absolute error histogram for function with 6 
+predictors modeled by genetic algorithm according to (4). Two water 
+molecules model. Trained regions $[$2.4..5$]$, $[$7..9$]$ angstrom, test 
+region $[$2.4..15$]$ angstrom.}
+\end{figure}
+
+Another important aspect is to examine the dependence of goodness of fit 
+on number of training points. To do that we used model based on eq. (4) 
+and trained regions $[$2.4..5$]$, $[$7..9$]$ and test region $[$2.4 .. 
+15$]$ angstrom. However, instead of using all training points we used 10 
+different fits with number of training points from 10\% of initial 
+number up to 100\% with the step 10\%. Both linear model and Gaussian 
+process were examined in equal conditions. The results are represented 
+by Fig. 14 and 15. It can be clearly seen that Gaussian process requires 
+more training points to obtain reasonable prediction. Linear model 
+behaves better when we used reduced number of training points and gave 
+reasonable results even at 10\% of initial set. All points were chosen 
+randomly for each small interval that represent some value measured as 
+average distance between the centers of masses of two water molecules. 
+
+\begin{figure}[h]
+\centering
+%\includegraphics[width=0.45\textwidth]{media/image18.eps}
+\caption{Fig. 14. RMSE vs. \% of usage of training points. Two water 
+molecules. Linear model (4) with 5 to 15 predictors and Gaussian 
+process. Trained regions $[$2.4..5$]$, $[$7..9$]$ angstrom, test region 
+$[$2.4..15$]$ angstrom.}
+\end{figure}
+
+
+\begin{figure}[h]
+\centering
+%\includegraphics[width=0.45\textwidth]{media/image19.eps}
+\caption{Fig. 15. R2 vs. \% of usage of training points. Two water 
+molecules. Linear model (4) with 5 to 15 predictors and Gaussian 
+process. Trained regions $[$2.4..5$]$, $[$7..9$]$ angstrom, test region 
+$[$2.4..15$]$ angstrom.}
+\end{figure}
+
+
+\section{Conclusions (and final remarks)}
+
+of this project is to improve predictive power of machine learning for 
+materials modeling by ZZZ. This goal is achieved through a combination 
+of modern artificial intelligence algorithms including genetic and 
+elastic net algorithms.
+
+Comparative analysis of our results with those obtained by GPR shows 
+that the new approach offers several advantages: it requires fewer 
+training points than Gaussian to produce accurate fit, the fitting model 
+can be used for interpolation and extrapolation where Gaussian process 
+does not show good accuracy or even fails, algorithm provides fitting 
+formula that has physical interpretation.
+
+Future work: generalization of the methodology to materials, features 
+with nonlinear parameters, reformulation of the procedure in the 
+Bayesian framework (analogous to that of GPR)
+
+
+\section{Computational methods}
+
+\textbf{Gaussian process regression. }To better understand the 
+accuracy and the performance of our method it would be nice to compare 
+its results with the ones obtained by using another machine learning 
+algorithms such as artificial neural network or gaussian process. For 
+this article, Gaussian process has been chosen since it can "\,mimic" 
+the shape of almost any complex function. We used 
+GaussianProcessRegressor from sklearn.gaussian\_process which is the 
+implementation of Gaussian Processes for Machine Learning by Rasmussen 
+and Williams. During fitting the hyperparameters of the kernel are 
+optimized by maximizing the log-marginal-likelihood based on the passed 
+optimizer. We used two kernels RBF which is basically Radial-basis 
+function or squared-exponential kernel and White Kernel the main use of 
+which is to add noise level component to the signal. Those two kernels 
+have two crucial parameters: length scale and noise level respectively. 
+Varying those parameters, it is possible to find the local maxima of the 
+function to achieve the best possible fit. Either optimizer provided by 
+scipy.optimize.fmin\_l\_bfgs\_b or user defined optimizer that must have 
+specific signature can be used to attune kernels and therefore GP 
+regressor to give optimal results. Since local maxima is a function of 
+two main variables, to find optimal solution we used a grid with varying 
+scale (Fig. 2). Both optimizers gave almost identical results. 
+
+\section{Acknowledgments} 
+
+The research was funded by the Natural Sciences and Engineering Research Council of Canada (NSERC) through Discovery
+Grants (RGPIN-2016-0505). The authors are grateful to Compute Canada and, in particular, the McGill HPC Centre for computer time.
+
+\bibliography{learn-physics}
+
+%RZK0: uncomment the switch to separate SI from the main text
+%\else % maintext - SI switch
+
+\newpage
+\clearpage
+%\widetext
+\setcounter{figure}{0}
+\setcounter{page}{1}
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+
+\section{LASSO} 
+
+We have explored performance of least absolute 
+shrinkage and selection operator (LASSO) method for the feature 
+selection stage of the training algorithm. LASSO is a special case of 
+the elastic net regularization with ZZZ coefficient being set to zero. 
+We found that LASSO, based on both forward stepwise and least angle 
+regression, tends to drop important features that are somewhat collinear 
+to those already selected. As a result, the final list selected by LASSO 
+contains too few features.
+
+In a multiple regression model multicollinearity indicates that the 
+collinear independent variables are somehow related. The presence of 
+multicollinearity within the set of features causes many problems in the 
+understanding the significance of individual independent features in our 
+regression model. Our feature set is generated in such a way that it is 
+impossible to avoid collinearity and multicollinearity since basically 
+we have set of distances raised to different powers. The variance 
+inflation factors (VIF) can prof that we have multicollinearity issues 
+in our set. It allows a quick estimation of how much a variable is 
+contributing to the standard error in our regression model. VIF is very 
+large when significant multicollinearity issues exist. Multicollinearity 
+can lead to less reliable probability values and larger confidence 
+intervals.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+� & X1 & X2 & X3 & X4 & X5 \\
+\hline
+X1 & 1.00 & 0.95 & 0.90 & 0.30 & 0.20 \\
+\hline
+X2 & 0.95 & 1.00 & 0.85 & 0.70 & 0.30 \\
+\hline
+X3 & 0.90 & 0.85 & 1.00 & 0.60 & 0.40 \\
+\hline
+X4 & 0.30 & 0.70 & 0.60 & 1.00 & 0.25 \\
+\hline
+X5 & 0.20 & 0.30 & 0.40 & 0.25 & 1.00 \\
+\hline
+\end{tabular}
+\end{table}
+
+
+Fig. 2. \textit{Correlation matrix example for 5 variables}
+
+\textbf{Best fit algorithm.} Schematically the algorithm looks like 
+following pseudocode:
+
+\textit{while found:}
+
+\textit{found = False}
+
+\textit{for feature in features:}
+
+\ \ \ \ \textit{for alternate in feature.alternates:}
+
+\ \ \ \ \ \ \ \ \textit{Replace\_temporarely(alternate, features)}
+
+\ \ \ \ \ \ \ \ \textit{new\_score = Score(features)}
+
+\ \ \ \ \ \ \ \ \textit{if new\_score $<$ best\_score:}
+
+\ \ \ \ \ \ \ \ \ \ \ \ \textit{found = True}
+
+\ \ \ \ \ \ \ \ \ \ \ \ \textit{Replace\_permanently(alternate, 
+features)}
+
+\ \ \ \ \ \ \ \ \ \ \ \ \textit{best\_score = new\_score}
+
+\ \ \ \ \ \ \ \ \ \ \ \ \textit{continue}
+
+where: 
+
+feature.alternates - a list of alternating (most correlated) features 
+created previously in correlation analysis part
+
+Replace\_temporarely - temporarily replacement of current feature by its 
+alternative from the list
+
+Replace\_permanently - permanent replacement of current feature by its 
+alternative. It also means that the list feature.alternates is been 
+replaced too by appropriate one from correlation analysis
+
+Score - some fitness function that evaluates the goodness of the fit. 
+For linear model we used OLS and for exponential fit we used 
+scipy.optimize.least\_squares.
+
+
+\fi % maintext - SI switch
+
+\end{document}
