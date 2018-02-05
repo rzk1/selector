@@ -50,41 +50,46 @@ IMO, best abstracts contain no more than 5 sentences. \old
 
 \section{Introduction}
 
-Machine learning shows enormous promise for modeling of materials and molecules. 
-One rapidly growing area of its application is the development of interatomic potentials -- functions that describe the dependence of the interaction energy between atoms on their positions. 
+Machine learning shows enormous promise for modeling of materials and molecules~\cite{}. 
+One of the many rapidly growing area of its application is the development of interatomic potentials -- functions that describe the dependence of the interaction energy between atoms on their positions and that represent the key ingredient of atomistic simulations. 
 In the last decade, several approaches based on artificial neural networks (ANNs) and Gaussian process regression (GPR) have been 
-developed to ``lear'' interatomic potentials from accurate quantum mechanical data. 
-The main advantage of machine-learned potentials (MLPs) is that they combine the high accuracy of quantum mechanical description 
-of interaction between atoms with the computational efficiency of human-derived analytical potentials. 
-This rare combination of accuracy and cost has enabled high-quality MLP-based simulations of complex materials on unprecedented time and length scales. 
+developed to approximate interatomic potentials using accurate quantum mechanical data as the reference. 
+The main advantage of a carefully calibrated machine-learned potential (MLP) is that it combines the high accuracy of quantum mechanical description of interaction between atoms with the computational efficiency of simple human-derived analytical potentials. 
+This rare combination of accuracy and cost has enabled high-quality MLP-based simulations of complex materials on unprecedented time and length scales~\cite{Khaliullin2010,Khaliullin2011,RZK0}. 
 
-The high accuracy of MLPs is the result of very flexible form of the fitting function that allows the algorithm, first, to reproduce the 
-known energy of the training points and then \textit{interpolate} between them. 
-Unfortunately, the accuracy of the existing MLPs comes with poor transferability, which stems from the inability of machine-learning algorithms to \textit{extrapolate} the energy to the atomistic configurations that deviate somewhat from those included in 
-the training set. 
-Our experience with ANN potentials shows that even minor deviations from the training set lead to dramatic failures in 
-predicted energies. 
-\red For example, ANN trained to reproduce the energy of the diamond phase of carbon. \old
-It is also extremely challenging for MLPs to predict accurate energies of crystal phase by training MLA on the energies of random liquid-like configurations. 
+%RZK0: Describe the main principles of local descriptors and similarity measure, so that the introduction below is clear.
 
-The focus of this work is to improve transferability of MLPs without compromising their flexibility and thus accuracy. 
-To achieve this ambitious goal, we developed a different approach to learning interatomic potentials. 
-The key idea of this methodology \red presented here \old is to let the algorithm select, out of a multitude of physically appropriate functions, only those few that reproduce the training data best. 
+The high accuracy of MLPs is the result of a very flexible form of the fitting function---parametric or nonparametric---that allows the learning algorithm, first, to adjust it to reproduce the 
+known energies at the training points and then \textit{interpolate} between the points thus predicting energies for new structures. 
+Unfortunately, the accuracy of the existing MLPs comes with poor transferability, which originates from the inability of machine-learning algorithms to \textit{extrapolate} the energy function to the atomistic configurations that 
+%are different from those included in the training set. 
+lie \emph{outside} the training set.
+%Our experience with ANN potentials shows that even minor deviations from the training set lead to dramatic failures in predicted energies. 
+For example, ANN trained to reproduce the energy of the diamond phase of carbon in the 0--20~GPa interval fails dramatically for any pressure outside this range~\cite{Khaliullin2010,Khaliullin2011}. 
+Similar problems may arise even for configurations inbetween training points if the training set is too sparse for accurate interpolation. 
+A good illustration of this situation is an MLP trained on configurations collected from liquid phases of carbon that cannot, nevertheless, predict energies of its crystal phases even though the local structures in liquid vaguely resembles those in solid state. 
+In order to cope with the sparsity problem, MLP training sets must include an enormous number of representative atomistic configurations. 
+
+The transferability problems summarized above stem from the complete neglect of the physics of interaction between atoms in MLPs---a by-design feature that keeps them flexible. As a result MLPs just \emph{mimic} the shape of complex interatomic potentials. For example, ANNs [as universal approximators] typically rely on unphysical sigmoid functions for fitting, whereas GPR can be viewed as a nonparametric energy representation in a Gaussian basis. 
+
+The severity of the transferability problem has inspired/led to numerous attempts to put the physical components back into the interatomic potentials. The resulting hybrid analytical-MLP approaches  include: using MLA as coordinate-dependent parameters in a fixed analytical potential. 
+While improving the transferability of MLPs and a range of applications this approach leads to significantly reduced flexibility.
+
+In this work, we propose a different approach to learning interatomic potentials with improved transferability that does not compromise their flexibility and thus accuracy. 
+The key idea of the methodology presented here is to let the algorithm select, out of a multitude of physically appropriate functions, only those few that reproduce the training data best. 
 A large number of trial functions, called features here, ensures the flexibility and accuracy of the fit. 
-The transferability is improved by including only few necessary and physically appropriate features and keeping the final energy expression as simple as possible. 
-An additional advantage of this approach is that the final energy expression is very simple and, in many cases, resemble analytical equations that describe basic physical laws.
+The [transferability] is improved by [tight control of overfitting] including only few necessary and physically appropriate features and keeping the final energy expression as simple as possible. 
+This algorithm is designed to constructs a physically motivated analytical equation that can properly describe materials outside the limits of training set. 
+An additional [and intriguing] advantage of this approach is that the final energy expression is very simple and, in many cases, resemble analytical equations that describe basic physical laws.
 
 Many components of this method have been used in many existing learning algorithms that construct MLPs. 
-For example, ANNs use a large number of simple sigmoid functions to ensure high accuracy of the fit. 
-However, sigmoid functions are not natural for describing the physics of interactions between atoms and an accurate fit requires too many of them \red to stay transferable. \old
-GPR, which is equivalent to kernel ridge regression, include a build-in penalty that favors simpler expressions. 
-Unfortunately, the nonparametric energy expression of GPR is not constrained to physically relevant functions. 
 This work is an attempt to include all the necessary components into PES-fitting MLA: highly-flexible and physically motivated fitting functions as well as a mechanism that keeps it simple. 
-To demonstrate utility of the idea, we consider only intermolecular interactions and feature selection with features that depend linearly on their parameters.
+To demonstrate the feasibility of the idea, we considered only intermolecular interactions and feature selection with features that depend linearly on their parameters.
 
-While the existing machine learning methods completely ignore physical origins of interactions between atoms and just ``mimic'' the shape of a complex interatomic potentials, this algorithm is designed to constructs a physically motivated analytical equation that can properly describe materials outside the limits of training set. 
-\red Early attempts to improve the transferability of MLP include: using MLA as coordinate-dependent parameters in a fixed analytical potential. 
-While improving the transferability of MLPs and a range of applications this approach leads to significantly reduced flexibility.\old
+%For example, ANNs use a large number of simple sigmoid functions to ensure high accuracy of the fit. 
+%However, sigmoid functions are not natural for describing the physics of interactions between atoms and an accurate fit requires too many of them \red to stay transferable. \old
+%GPR, which is equivalent to kernel ridge regression, include a build-in penalty that favors simpler expressions. 
+%Unfortunately, the nonparametric energy expression of GPR is not constrained to physically relevant functions. 
 
 
 \section{Methodology}
@@ -640,6 +645,10 @@ specific signature can be used to attune kernels and therefore GP
 regressor to give optimal results. Since local maxima is a function of 
 two main variables, to find optimal solution we used a grid with varying 
 scale (Fig. 2). Both optimizers gave almost identical results. 
+
+\section{Conclusions}
+
+In this work, we proposed a new machine learning strategy to reproduce the interaction energy between molecules based on a limited training set of accurate quantum mechanical data. Unlike existing machine learning techniques, the new methodology is designed to incorporate physically relevant information into the model while still retaining its high flexibility. In addition to this, the learning strategy is developed around a strict control of overfitting and thus selects only the most important components of model. It is demonstrated, using water molecules as an example, that this approach recovers fundamental physical laws that govern intermolecular interactions. As a result, the obtained models do not only reproduce quantum mechanical energies in the region spanned by the training set configurations but are also capable of extrapolating well outside this region -- a remarkable achievement for machine learning in molecular modeling. Moreover, it is shown that incorporating physically motivated features into the model drastically reduces the number of reference data points in the training set without sacrificing the quality of predictions. In the future, the approach presented here will be extended to systems of strongly interacting atoms that may require incorporating more complex nonlinear physical features. 
 
 \section{Acknowledgments} 
 
