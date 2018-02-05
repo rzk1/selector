@@ -603,23 +603,16 @@ $[$2.4..15$]$ angstrom.}
 \end{figure}
 
 
-\section{Conclusions (and final remarks)}
+\section{Conclusions}
 
-of this project is to improve predictive power of machine learning for 
-materials modeling by ZZZ. This goal is achieved through a combination 
-of modern artificial intelligence algorithms including genetic and 
-elastic net algorithms.
-
-Comparative analysis of our results with those obtained by GPR shows 
-that the new approach offers several advantages: it requires fewer 
-training points than Gaussian to produce accurate fit, the fitting model 
-can be used for interpolation and extrapolation where Gaussian process 
-does not show good accuracy or even fails, algorithm provides fitting 
-formula that has physical interpretation.
-
-Future work: generalization of the methodology to materials, features 
-with nonlinear parameters, reformulation of the procedure in the 
-Bayesian framework (analogous to that of GPR)
+In this work, we proposed a new machine learning strategy to reproduce the interaction energy between molecules based on a limited training set of accurate quantum mechanical data. Unlike existing machine learning techniques, the new methodology is designed to incorporate physically relevant information into the model while still retaining its high flexibility. In addition to this, the learning strategy is developed around a strict control of overfitting and thus selects only the most important components of model. 
+%This goal is achieved through a combination of modern artificial intelligence algorithms including genetic and elastic net algorithms.
+It is demonstrated, using water molecules as an example, that this approach recovers fundamental physical laws that govern intermolecular interactions. As a result, the obtained models do not only reproduce quantum mechanical energies in the region spanned by the training set configurations but are also capable of extrapolating well outside this region -- a remarkable achievement for machine learning in molecular modeling. Moreover, it is shown that incorporating physically motivated features into the model drastically reduces the number of reference data points in the training set without sacrificing the quality of predictions. 
+%improves predictive power of machine learning for molecular/materials modeling. 
+In the future, the approach presented here will be extended to systems of strongly interacting atoms 
+%in gas-phase molecules, condensed phase systems, and materials
+that may require incorporating more complex nonlinear physical features. 
+% reformulation of the procedure in the Bayesian framework analogous to that of GPR (kernel)
 
 
 \section{Computational methods}
@@ -645,10 +638,6 @@ specific signature can be used to attune kernels and therefore GP
 regressor to give optimal results. Since local maxima is a function of 
 two main variables, to find optimal solution we used a grid with varying 
 scale (Fig. 2). Both optimizers gave almost identical results. 
-
-\section{Conclusions}
-
-In this work, we proposed a new machine learning strategy to reproduce the interaction energy between molecules based on a limited training set of accurate quantum mechanical data. Unlike existing machine learning techniques, the new methodology is designed to incorporate physically relevant information into the model while still retaining its high flexibility. In addition to this, the learning strategy is developed around a strict control of overfitting and thus selects only the most important components of model. It is demonstrated, using water molecules as an example, that this approach recovers fundamental physical laws that govern intermolecular interactions. As a result, the obtained models do not only reproduce quantum mechanical energies in the region spanned by the training set configurations but are also capable of extrapolating well outside this region -- a remarkable achievement for machine learning in molecular modeling. Moreover, it is shown that incorporating physically motivated features into the model drastically reduces the number of reference data points in the training set without sacrificing the quality of predictions. In the future, the approach presented here will be extended to systems of strongly interacting atoms that may require incorporating more complex nonlinear physical features. 
 
 \section{Acknowledgments} 
 
