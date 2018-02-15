@@ -344,7 +344,15 @@ EN works faster than GA but gives worst results.
 
 \subsection{System A: TIP3P water dimer}
 
-We would like to show that our algorithm recovers the correct analytical equation from [sparse?] data.
+We would like to show that our algorithm recovers the correct analytic equation from sparse data. In order to test it and to see how well it would find a simple expression, first of all, we used equation (3) to generate data in the interval where the distance between centers of masses of two water molecules varies from 2 to 8 angstrom. We used range of powers from -1 to -15 for features with single distances and the same range for features that contain product of distances. We did not remove intramolecular distances to see how well our code can reveal the formula we used. Also, for simulation we took only a random numbers of coordinates that equally represent each small bin in chosen interval. The bin size was 0.2 angstrom. Initial number of features was 225 + 12600 = 12825. After performing dimensionality reduction genetic algorithm started with 75 + 3585 = 3660 features and 69 training points per bin (total number of training records was 2139). Initial chromosome size was and number of population was equal to 100. At the and of code execution the exact linear fit with 5 variables and original coefficients were recovered.
+
+\begin{eqnarray}
+&E(R_i) = c_o(\frac{1}{R_{O_1O_2}^{12}}-\frac{1}{R_{O_1O_2}^6}) + \frac{c_1}{R_{O_1O_2}} - \nonumber
+\\
+& - c_2(\frac{1}{R_{O_1H_{21}}}+\frac{1}{R_{O_1H_{22}}}+\frac{1}{R_{O_2H_{11}}}+\frac{1}{R_{O_2H_{12}}}) + \nonumber
+\\
+& + c_3(\frac{1}{R_{H_{11}H_{21}}}+\frac{1}{R_{H_{11}H_{22}}}+\frac{1}{R_{H_{12}H_{21}}}+\frac{1}{R_{H_{12}H_{22}}})
+\end{eqnarray}
 
 \subsection{System B: water dimer}
 
@@ -355,10 +363,10 @@ need to analyze how MSE of the function obtained from fitting procedure
 depends on number of predictors. We have two functions with varying 
 number of predictors obtained by modeling equations (4) and (5). 
 
-\begin{figure}
+%\begin{figure}
 %\includegraphics[width=0.45\textwidth]{media/image5.eps}
-\caption{\red (Fig. 4.)\old Dependence of RMSE (and R$^2$) on the number of feature selected with EN/GA? for System X. \red Combine R2 and RMSE in one plot using left and right y-axes (or choose just one of the two). \old} \label{Fig:ZZZ}
-\end{figure}
+%\caption{\red (Fig. 4.)\old Dependence of RMSE (and R$^2$) on the number of feature %selected with EN/GA? for System X. \red Combine R2 and RMSE in one plot using left and %right y-axes (or choose just one of the two). \old} \label{Fig:ZZZ}
+%\end{figure}
 
 Fig. 3 and 4 show the relationship between root of mean squared error 
 (RMSE) and adjusted R2 vs. number of predictors modeled by equation (3). 
