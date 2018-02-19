@@ -344,87 +344,83 @@ EN works faster than GA but gives worst results.
 
 \subsection{System A: TIP3P water dimer}
 
-We would like to show that our algorithm recovers the correct analytic equation from sparse data. In order to test it and to see how well it would find a simple expression, first of all, we used equation (3) to generate data in the interval where the distance between centers of masses of two water molecules varies from 2 to 8 angstrom. We used range of powers from -1 to -15 for features with single distances and the same range for features that contain product of distances. We did not remove intramolecular distances to see how well our code can reveal the formula we used. Also, for simulation we took only a random numbers of coordinates that equally represent each small bin in chosen interval. The bin size was 0.2 angstrom. Initial number of features was 225 + 12600 = 12825. After performing dimensionality reduction genetic algorithm started with 75 + 3585 = 3660 features and 69 training points per bin (total number of training records was 2139). Initial chromosome size was and number of population was equal to 100. At the and of code execution the exact linear fit with 5 variables and original coefficients were recovered.
+We would like to show that our algorithm recovers the correct analytic equation from sparse data. In order to test it and to see how well it would find a simple expression, first of all, we used equation~(\ref{eq:tip3p}) to generate data in the interval where the distance between centers of masses of two water molecules varies from 2 to 8 angstrom. We used range of powers from -1 to -15 for features with single distances and the same range for features that contain product of distances. Since all intramolecular distances are just constants they were removed from the set. Also, for simulation we took only a random numbers of coordinates that equally represent each small bin in chosen interval. The bin size was 0.2 angstrom. Initial number of features was 135 + 1008 = 1143. After performing dimensionality reduction genetic algorithm started with 45 + 245 = 290 features and 69 training points per bin with total number of training records equal to  2139. Initial chromosome size was 20 and number of individuals in population was equal to 100. At the and of code execution the exact linear fit with 5 variables and original coefficients were recovered.
 
 Please see Eq.~(\ref{eq:tip3p})
 
 \begin{eqnarray} \label{eq:tip3p}
-&E(R_i) = c_o(\frac{1}{R_{O_1O_2}^{12}}-\frac{1}{R_{O_1O_2}^6}) + \frac{c_1}{R_{O_1O_2}} - \nonumber
+&E(R_i) = \frac{c_0}{R_{O_1O_2}^{12}}-\frac{c_1}{R_{O_1O_2}^6} + \frac{c_2}{R_{O_1O_2}} - \nonumber
 \\
-& - c_2(\frac{1}{R_{O_1H_{21}}}+\frac{1}{R_{O_1H_{22}}}+\frac{1}{R_{O_2H_{11}}}+\frac{1}{R_{O_2H_{12}}}) + \nonumber
+& - c_3(\frac{1}{R_{O_1H_{21}}}+\frac{1}{R_{O_1H_{22}}}+\frac{1}{R_{O_2H_{11}}}+\frac{1}{R_{O_2H_{12}}}) + \nonumber
 \\
-& + c_3(\frac{1}{R_{H_{11}H_{21}}}+\frac{1}{R_{H_{11}H_{22}}}+\frac{1}{R_{H_{12}H_{21}}}+\frac{1}{R_{H_{12}H_{22}}})
+& + c_4(\frac{1}{R_{H_{11}H_{21}}}+\frac{1}{R_{H_{11}H_{22}}}+\frac{1}{R_{H_{12}H_{21}}}+\frac{1}{R_{H_{12}H_{22}}})
 \end{eqnarray}
 
 \subsection{System B: water dimer}
 
-\red Use {\textbackslash}label and {\textbackslash}ref to keep track of numbering. All figures should be in the vector format. EPS is the best format. Font in figures must be as large the font in figure caption. Remove caption from the figure. All physical quantities must have labels. Energy units are kJ$\cdot$mol$^{-1}$. 1 hartree = 2625.499638~kJ$\cdot$mol$^{-1}$. \old
+\red Use {\textbackslash}label and {\textbackslash}ref to keep track of numbering. Font in figures must be as large the font in figure caption.  All physical quantities must have labels. Energy units are kJ$\cdot$mol$^{-1}$. 1 hartree = 2625.499638~kJ$\cdot$mol$^{-1}$. \old
 
-In this part, we focus on two water molecules model. First of all, we 
-need to analyze how MSE of the function obtained from fitting procedure 
-depends on number of predictors. We have two functions with varying 
-number of predictors obtained by modeling equations (4) and (5). 
+In this part, we focus on two water molecules model. First of all, we need to analyze how RMSE of the function obtained from fitting procedure depends on number of predictors. In simplest case we have only the first term of equation (\ref{eq:tip3p}). Fig. \ref{Fig:1} shows that when we have a fit with more than 6 variables, RMSE decreases very slightly. If we were to examine what machine learned from dataset first of all it would be wise to compare classic model given by equation \ref{eq:tip3p} with newly found fit. For 5 predictors, the results are summarized in Table \ref{Tab:ZZZ}. Its RMSE=0.000706839 Ha is even better than the one obtained with classic formula which is 0.000742766 Ha. Since algorithm saves all explored states, we discovered that there are many states with similar goodness of the fit. The one described above is just the best one obtained for this particular configuration (training points are in the interval 2.8A to 5.6A).
 
 \begin{figure}
-\includegraphics[width=0.45\textwidth]{media/GA_PATH.eps}
-\caption{\red (Fig. 4.)\old Dependence of RMSE (and R$^2$) on the number of feature. selected with EN/GA? for System X. \red Combine R2 and RMSE in one plot using left and right y-axes (or choose just one of the two). \old} \label{Fig:ZZZ}
+\includegraphics[width=0.45\textwidth]{media/B1_Single_GA_PATH_RMSE.eps}
+\caption{Dependence of RMSE on the number of predictors. GA + A* search. System B1}\label{Fig:B1_RMSE}
 \end{figure}
 
-Fig. 3 and 4 show the relationship between root of mean squared error 
-(RMSE) and adjusted R2 vs. number of predictors modeled by equation (3). 
-Training set covers all region. Looking at Fig. 3 and 4 we might be 
-interested in results where we have 5 predictors. Looking at detailed 
-description (Fig. 5 and 6) that summarizes all relevant information 
-about the model
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/B1_Single_Energy_5_predictors.eps}
+\caption{Dependence of enegry on the average disdance between centers of masses. Fit obtained by GA + A* search and gaussian process. System B1}\label{Fig:B1_Energy}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/B1_Single_Error_5_predictors.eps}
+\caption{Dependence of error on the average disdance between centers of masses. Fit obtained by GA + A* search and gaussian process. System B1}\label{Fig:B1_RMSE_5_predictors}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/B1_GA_energy_error_histogram_5_predictors.eps}
+\caption{Energy error histogram. Fit obtained by GA + A* search and gaussian process. System B1}\label{Fig:B1_histogram_5_predictors}
+\end{figure}
 
 \begin{table}
-\caption{Table 1. Final five-feature fit for system ZZZ obtained with GA/EN.}\label{Tab:ZZZ}
+\caption{Final five-feature fit for system B1 obtained with GA and A* search.}\label{Tab:B1 coefficients}
 \begin{tabular*}{0.45\textwidth}{c @{\extracolsep{\fill}} ccc}
 %{ccc}
 %\begin{tabular}{l*{6}{c}r}
 \hline
 Distance & Power, $n$ & Coefficient, $Ha\cdot\AA^n$ \\
 \hline
-O-O & 12 & 470.76 \\
+O-O & 15 & 10277.69135 \\
 \hline
-O-H & 1 & -0.11866 \\
+O-H & 1 & -0.134819566 \\
 \hline
-O-O & 1 & 0.23203 \\
+O-O & 1 & 0.272649246 \\
 \hline
-H-H & 1 & 0.060300 \\
+H-H & 1 & 0.066224979 \\
 \hline
-H-H & 5 & 0.022497 \\
+H-H & 7 & 0.042010518 \\
 \hline
 \end{tabular*}
 \end{table}
 
-Data from Table 1 is nothing else but formula that describes energy for 
-two water molecules system. According to Fig. 1 and considering that 
-physically equivalent distances have the same fitting coefficients it 
-can be summarized in one simple formula:
-
-Terms with power -1 look like Coulombs law. We have only one negative 
-coefficient in front of O-H bond, the rest are positive. The goodness of 
-this fit is summarized in Table 2
-
-\begin{center}Table 2\end{center}
-
-\begin{center}\textit{Parameters that describe goodness of fit 
-represented by (5)}\end{center}
-
-\begin{table}[h]
-\centering
-\begin{tabular}{|l|l|l|l|l|l|l|l|}
-\hline
-\textbf{MSE Train} & \textbf{RMSE Train} & \textbf{R2 Train} & 
-\textbf{R2 Adjusted Train} & \textbf{MSE Test} & \textbf{RMSE Test
-} & \textbf{R2 Test} & \textbf{R2 Adjusted Test} \\
-\hline
-4.01E-07 & 0.000633 & 0.92285 & 0.922759 & 4.13E-07 & 0.000643 & 
-0.949011 & 0.94877 \\
-\hline
-\end{tabular}
-\end{table}
+%\begin{center}Table 22\end{center}
+%
+%\begin{center}\textit{Parameters that describe goodness of fit 
+%represented by (5)}\end{center}
+%
+%\begin{table}[h]
+%\centering
+%\begin{tabular}{|l|l|l|l|l|l|l|l|}
+%\hline
+%\textbf{MSE Train} & \textbf{RMSE Train} & \textbf{R2 Train} & 
+%\textbf{R2 Adjusted Train} & \textbf{MSE Test} & \textbf{RMSE Test
+%} & \textbf{R2 Test} & \textbf{R2 Adjusted Test} \\
+%\hline
+%4.01E-07 & 0.000633 & 0.92285 & 0.922759 & 4.13E-07 & 0.000643 & 
+%0.949011 & 0.94877 \\
+%\hline
+%\end{tabular}
+%\end{table}
 
 
 \begin{figure}[h]
@@ -433,10 +429,17 @@ represented by (5)}\end{center}
 \caption{Fig. 6. $G=2$.} \label{Fig:dipoledist}
 \end{figure}
 
+In order to analyze deeper system B we extended our previous model to two terms of equation~(\ref{eq:tip3p}). Second term might be useful if there exists dependence between our features generated using first part of equation~(\ref{eq:tip3p}). In this case, the second term will improve the goodness of the fit.
 
-After performing fitting using full features set according to (4) we 
-obtained similar graphs that represents relationship between RMSE or R2 
-and number of predictors. If we take a closer look at details of fit 
+
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/B2_VIP_GA_PATH_RMSE.eps}
+\caption{Dependence of RMSE on the number of predictors. GA + A* search. System B2}\label{Fig:B2_VIP_RMSE}
+\end{figure}
+
+
+If we take a closer look at details of fit 
 with 5 predictors we could observe that the goodness of fit if better. 
 The algorithm chose 4 out of 5 features that contain product of 
 distances which signifies that they are not completely independent and 
@@ -448,7 +451,7 @@ there exists some relationship between them.
 \begin{tabular}{|l|l|l|l|l|l|}
 \hline
 \textbf{Bond 1} & \textbf{Power 1} & \textbf{Bond 2} & \textbf{
-Power 2} & \textbf{Number of distances in feature} & \textbf{
+Power 2} & \textbf{nDist} & \textbf{
 Coefficients} \\
 \hline
 H-H & -2 & � & � & 4 & 0.171764693 \\
@@ -464,24 +467,22 @@ O-H & -1 & H-H & -1 & 8 & 0.036990729 \\
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
-\caption{Table 4. Parameters that describe goodness of fit with coefficients from Table 3}
-\begin{tabular}{|l|l|l|l|l|l|l|l|}
-\hline
-\textbf{MSE Train} & \textbf{RMSE Train} & \textbf{R2 Train} & 
-\textbf{R2 Adjusted Train} & \textbf{MSE Test} & \textbf{RMSE Test
-} & \textbf{R2 Test} & \textbf{R2 Adjusted Test} \\
-\hline
-1.68E-07 & 0.00041 & 0.973192 & 0.97316 & 1.65E-07 & 0.000406 & 0.960991 
-& 0.960807 \\
-\hline
-\end{tabular}
-\end{table}
+%\begin{table}[h]
+%\caption{Table 4. Parameters that describe goodness of fit with coefficients from Table 3}
+%\begin{tabular}{|l|l|l|l|l|l|l|l|}
+%\hline
+%\textbf{MSE Train} & \textbf{RMSE Train} & \textbf{R2 Train} & 
+%\textbf{R2 Adjusted Train} & \textbf{MSE Test} & \textbf{RMSE Test
+%} & \textbf{R2 Test} & \textbf{R2 Adjusted Test} \\
+%\hline
+%1.68E-07 & 0.00041 & 0.973192 & 0.97316 & 1.65E-07 & 0.000406 & 0.960991 
+%& 0.960807 \\
+%\hline
+%\end{tabular}
+%\end{table}
 
 
-It should be mentioned that last two rows in table 3 represent different 
-pairs of distances. There are 7 types of pairs of distances applicable 
-to this model and they will be described later. 
+
 
 Another interesting aspect is to compare our results with Gaussian 
 process. At the same time, we have to investigate one of our goals: can 
