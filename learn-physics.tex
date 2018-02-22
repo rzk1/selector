@@ -369,17 +369,17 @@ In this part, we focus on two water molecules model. First of all, we need to an
 
 \begin{figure}
 \includegraphics[width=0.45\textwidth]{media/B1_Single_Energy_5_predictors.eps}
-\caption{Dependence of enegry on the average disdance between centers of masses. Fit obtained by GA + A* search and gaussian process. System B1}\label{Fig:B1_Energy}
+\caption{Dependence of enegry on the average disdance between centers of masses. Fit for 5 predictors obtained by GA + A* search and gaussian process. System B1}\label{Fig:B1_Energy}
 \end{figure}
 
 \begin{figure}
 \includegraphics[width=0.45\textwidth]{media/B1_Single_Error_5_predictors.eps}
-\caption{Dependence of error on the average disdance between centers of masses. Fit obtained by GA + A* search and gaussian process. System B1}\label{Fig:B1_RMSE_5_predictors}
+\caption{Dependence of error on the average disdance between centers of masses. Fit for 5 predictors obtained by GA + A* search and gaussian process. System B1}\label{Fig:B1_RMSE_5_predictors}
 \end{figure}
 
 \begin{figure}
 \includegraphics[width=0.45\textwidth]{media/B1_GA_energy_error_histogram_5_predictors.eps}
-\caption{Energy error histogram. Fit obtained by GA + A* search and gaussian process. System B1}\label{Fig:B1_histogram_5_predictors}
+\caption{Energy error histogram. Fit for 5 predictors obtained by GA + A* search. System B1}\label{Fig:B1_histogram_5_predictors}
 \end{figure}
 
 \begin{table}
@@ -403,39 +403,39 @@ H-H & 7 & 0.042010518 \\
 \end{tabular*}
 \end{table}
 
-%\begin{center}Table 22\end{center}
-%
-%\begin{center}\textit{Parameters that describe goodness of fit 
-%represented by (5)}\end{center}
-%
-%\begin{table}[h]
-%\centering
-%\begin{tabular}{|l|l|l|l|l|l|l|l|}
-%\hline
-%\textbf{MSE Train} & \textbf{RMSE Train} & \textbf{R2 Train} & 
-%\textbf{R2 Adjusted Train} & \textbf{MSE Test} & \textbf{RMSE Test
-%} & \textbf{R2 Test} & \textbf{R2 Adjusted Test} \\
-%\hline
-%4.01E-07 & 0.000633 & 0.92285 & 0.922759 & 4.13E-07 & 0.000643 & 
-%0.949011 & 0.94877 \\
-%\hline
-%\end{tabular}
-%\end{table}
-
-
 \begin{figure}[h]
 \centering
 %\includegraphics[width=0.45\textwidth]{media/image10.eps}
 \caption{Fig. 6. $G=2$.} \label{Fig:dipoledist}
 \end{figure}
 
-In order to analyze deeper system B we extended our previous model to two terms of equation~(\ref{eq:tip3p}). Second term might be useful if there exists dependence between our features generated using first part of equation~(\ref{eq:tip3p}). In this case, the second term will improve the goodness of the fit.
+In order to analyze deeper system B, we extended our previous model to two terms of equation~(\ref{eq:tip3p}). Second term might be useful if there exists dependence between our features generated using first part of equation~(\ref{eq:tip3p}). In this case, the second term will improve the goodness of the fit.
 
-
+% B2
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/B2_GA_PATH_RMSE.eps}
+\caption{Dependence of RMSE on the number of predictors. GA + A* search. System B2}\label{Fig:B2_RMSE}
+\end{figure}
 
 \begin{figure}
+\includegraphics[width=0.45\textwidth]{media/B2_Energy_8_predictors.eps}
+\caption{Dependence of enegry on the average disdance between centers of masses. Fit for 8 predictors obtained by GA + A* search and gaussian process. System B2}\label{Fig:B2_Energy}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/B2_Error_8_predictors.eps}
+\caption{Dependence of error on the average disdance between centers of masses. Fit for 8 predictors obtained by GA + A* search and gaussian process. System B2}\label{Fig:B2_RMSE_8_predictors}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/B2_GA_energy_error_histogram_8_predictors.eps}
+\caption{Energy error histogram for 8 predictors. Fit obtained by GA + A* search. System B2}\label{Fig:B2_histogram_8_predictors}
+\end{figure}
+
+% B2 VIP 
+\begin{figure}
 \includegraphics[width=0.45\textwidth]{media/B2_VIP_GA_PATH_RMSE.eps}
-\caption{Dependence of RMSE on the number of predictors. GA + A* search. System B2}\label{Fig:B2_VIP_RMSE}
+\caption{Dependence of RMSE on the number of predictors. GA + A* search. System B2 with fixed 5 best predictors from system B1}\label{Fig:B2_VIP_RMSE}
 \end{figure}
 
 
@@ -447,7 +447,8 @@ there exists some relationship between them.
 
 
 \begin{table}[h]
-\caption{Table 3. Coefficients for (4) with bond descriptions and corresponding number of distances and powers}
+\caption{\red Not sure which data I should write here \old Table 3. Coefficients for (4) with bond descriptions and corresponding number of distances and powers}
+\label{Tab:B2 coefficients}
 \begin{tabular}{|l|l|l|l|l|l|}
 \hline
 \textbf{Bond 1} & \textbf{Power 1} & \textbf{Bond 2} & \textbf{
@@ -481,8 +482,52 @@ O-H & -1 & H-H & -1 & 8 & 0.036990729 \\
 %\end{tabular}
 %\end{table}
 
+\subsection{System C: three water molecules}
+
+After four predictors increasing numbers of features does not give significant improvement in fitness. What is remarkable that best fit chosen by algorithm contains the same powers for each distance within one complex feature that contains product of distances. Hopefully it is not coincidence because for different results with number of predictors in range from two to ten all "double" features contain products of distances with the same powers. Coefficients and feature descriptions are in Table \ref{Tab:C coefficients}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/C_GA_PATH_R2.eps}
+\caption{Dependence of R2 on the number of predictors. GA + A* search. System C}\label{Fig:C_R2}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/C_Energy_4_predictors.eps}
+\caption{Dependence of enegry on the average disdance between centers of masses of molecules to center of mass of the system. Fit for 4 predictors obtained by GA + A* search and gaussian process. System C}\label{Fig:C_Energy_4_predictors}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/C_Error_4_predictors.eps}
+\caption{Dependence of error on the average disdance between centers of masses of molecules to center of mass of the system. Fit for 4 predictors obtained by GA + A* search and gaussian process. System C}\label{Fig:C_RMSE_4_predictors}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/C_GA_energy_error_histogram_4_predictors.eps}
+\caption{Energy error histogram. Fit for 4 predictors obtained by GA + A* search. System C}\label{Fig:C_histogram_4_predictors}
+\end{figure}
+
+\begin{table}[h]
+\caption{Coefficients for system C according to two first terms of equation (\ref{eq:tip3p}) with bond descriptions and corresponding number of distances and powers}
+\label{Tab:C coefficients}
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+\textbf{Bond 1} & \textbf{Power 1} & \textbf{Bond 2} & \textbf{
+Power 2} & \textbf{nDist} & \textbf{
+Coefficients} \\
+\hline
+O-H & -3 & O-H & -3 & 18 & 0.349485411 \\
+\hline
+O-O & -3 & O-O & -3 & 3 & 1.593740258 \\
+\hline
+O-O & -3 & O-H & -3 & 12 & -0.910662734 \\
+\hline
+O-H & -4 & H-H & -4 & 24 & -0.201270344 \\
+\hline
+\end{tabular}
+\end{table}
 
 
+\subsection{Comparison with Gaussian process}
 
 Another interesting aspect is to compare our results with Gaussian 
 process. At the same time, we have to investigate one of our goals: can 
