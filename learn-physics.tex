@@ -51,7 +51,7 @@ IMO, best abstracts contain no more than 5 sentences. \old
 \section{Introduction}
 
 Machine learning shows enormous promise for modeling of materials and molecules~\cite{ceriotti-science}. 
-One of the many rapidly growing area of its application is the development of interatomic potentials---functions that describe the dependence of the interaction energy between atoms on their positions. 
+One of the many rapidly growing areas of its application is the development of interatomic potentials---functions that describe the dependence of the interaction energy between atoms on their positions. 
 In the last decade, several approaches based on artificial neural networks (ANNs) and Gaussian process regression (GPR) have been 
 developed to approximate interatomic potentials using accurate quantum mechanical data as training data. 
 The main advantage of carefully calibrated machine-learned potentials (MLPs) is that they combine the high accuracy of quantum mechanical description of interaction between atoms with the computational efficiency of simple human-derived analytical potentials. 
@@ -90,9 +90,11 @@ To demonstrate a feasibility of the outlined approach, we considered only interm
 
 %\red Short description of the general methodology with only basic equations and motivation behind them. All examples related to a specific model (e.g. water) will be presented in Results and Discussion. Description of the code (not be confused with algorithm) should be moved to the Supplementary Information. All results should be presented in Results and Discussion, unless they are necessary to understand our methodology. \old
 
-This expression also satisfies another important physical constraints: it makes energy invariant to translations and rotations of the entire molecular system. 
+\subsection{Model energy function} 
 
-For any system, the potential energy as a function of interatomic distances satisfies two constraints: it approaches zero when all atoms are infinitely far from each other and it becomes infinite as the distance between any two atoms approaches zero.
+This expression also satisfies another important physical constraints: it makes energy invariant to translations and rotations of the entire molecular system, permutation of physically atoms of the same element.
+
+For any atomistic system, the potential energy as a function of interatomic distances satisfies two constraints: it approaches zero when all atoms are infinitely far from each other and it becomes infinite as the distance between any two atoms approaches zero.
 %
 \begin{eqnarray}
 \lim_{\forall R_i \rightarrow \infty} E (\mathbf{R}) = 0 \\
@@ -118,7 +120,7 @@ The multipole expansion of intermolecular energies implies that POIDs can adequa
 The flexibility of the model \red is very high\old as it includes many-body beyond simple pairwise interactions through products 
 of POIDs.
 
-\textbf{Systems and training set.} 
+\subsection{Systems and training sets} 
 
 %Lennard-Jones model.
 
@@ -167,7 +169,9 @@ molecules, the full model should be used since the simplified one cannot
 give accurate fit. 
 
 
-\textbf{Training procedure.} In this model, POIDs and their products serve as \textit{features}. 
+\subsection{Training procedure} 
+
+In this model, POIDs and their products serve as \textit{features}. 
 To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters (i.e. linear coefficients in our case) to produce the best fit. 
 The training procedure includes two stages: feature selection and fine-tuning. 
 \red The second part is the improvement of the subset performed using correlation analysis (CA) and searching for alternate features. \old
@@ -181,7 +185,9 @@ $[$the?$]$ genetic algorithm is that it can be easily generalized to
 features with nonlinear fitting coefficients (e.g. exponentially 
 decaying functions can be included in the feature list later).
 
-\textit{Elastic net}. Basic idea and main equation
+\subsubsection{Elastic net}
+
+Basic idea and main equation
 
 As it was mentioned if there is a group of highly correlated variables, 
 then the LASSO selects just one variable from a group and drop the 
@@ -206,7 +212,9 @@ ordinary least squares (OLS) as a fitness function and the criterion
 would be minimum squared error (MSE). BE can be used for linear and 
 nonlinear features; the only difference is different fitness functions.
 
-\textit{Genetic algorithm.}\textbf{ }Very general description of GA. 
+\subsubsection{Genetic algorithm} 
+
+Very general description of GA. 
 Population of chromosomes improved by iterative mutations and 
 corssovers.
 
@@ -226,7 +234,9 @@ randomly selected feature with alternate feature from correlation list.
 The procedure of obtaining lists of alternate features will described in 
 the next two sections.
 
-\textit{Fine-tuning ZZZ.} The second stage of the training processes 
+\subsubsection{Fine-tuning ZZZ} 
+
+The second stage of the training processes 
 is designed to deal with strong multicollinearity between features. 
 Since our goal is to reduce the number of POIDs in the fitting function, 
 most common methods of dealing with linear dependent features such as 
@@ -262,7 +272,9 @@ depends on MinCorrelation variable that influence the formation of
 alternate features lists. The closer this variable to 0 the greater 
 lists and the lower performance. 
 
-\textbf{Final stage. }At this stage, we have few features that were 
+\subsubsection{Final stage}
+
+At this stage, we have few features that were 
 previously selected by either EN or GA. In case of GA this number can be 
 strict since it is equal to chromosome size assigned in GA. For EN this 
 number can be equal to desired value only approximately by varying 
