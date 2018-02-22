@@ -435,7 +435,7 @@ In order to analyze deeper system B, we extended our previous model to two terms
 % B2 VIP 
 \begin{figure}
 \includegraphics[width=0.45\textwidth]{media/B2_VIP_GA_PATH_RMSE.eps}
-\caption{Dependence of RMSE on the number of predictors. GA + A* search. System B2 with fixed 5 best predictors from system B1}\label{Fig:B2_VIP_RMSE}
+\caption{Dependence of RMSE on the number of predictors. GA + A* search. System B2 with fixed 5 best predictors from system B2}\label{Fig:B2_VIP_RMSE}
 \end{figure}
 
 
@@ -545,22 +545,25 @@ our method.
 
 \begin{figure}[h]
 \centering
-%\includegraphics[width=0.45\textwidth]{media/image12.eps}
-\caption{Fig. 8. \textit{Average bin error vs. average distance between centers 
-of masses. Two water molecules model. Single distance features from (3) 
-with 7 predictors and Gaussian Process. Trained regions $[$2.4..5$]$, 
+\includegraphics[width=0.45\textwidth]{media/B1_gap_Energy_6_predictors.eps}
+\caption{\textit{Dependence of energy on the average disdance between centers of masses. Fit for 6 predictors obtained by GA + A* search and Gaussian process. System B1. Trained region $[$2.4..5$]$, 
 $[$7..9$]$ angstrom, test region $[$2.4..15$]$ angstrom}}
+\label{Fig:B1_gap_energy_6_predictors}
 \end{figure}
 
 \begin{figure}[h]
 \centering
-%\includegraphics[width=0.45\textwidth]{media/image13.eps}
-\caption{Fig. 9. Average energy per bin vs. average distance between 
-centers of masses. Two water molecules model. True energy plot. Single 
-distance features from (3) with 7 predictors and Gaussian Process. 
-Trained regions $[$2.4..5$]$, $[$7..9$]$ angstrom, test region 
-$[$2.4..15$]$ angstrom}
+\includegraphics[width=0.45\textwidth]{media/B1_gap_Error_6_predictors.eps}
+\caption{\textit{Dependence of error on the average disdance between centers of masses. Fit for 6 predictors obtained by GA + A* search and Gaussian process. System B1. Trained region $[$2.4..5$]$, 
+$[$7..9$]$ angstrom, test region $[$2.4..15$]$ angstrom}}\label{Fig:B1_gap_RMSE_6_predictors}
 \end{figure}
+
+\begin{figure}[h]
+\includegraphics[width=0.45\textwidth]{media/B1_gap_GA_energy_error_histogram_6_predictors.eps}
+\caption{\textit{Energy error histogram. Fit for 6 predictors obtained by GA + A* search. System B1. Trained region $[$2.4..5$]$, 
+$[$7..9$]$ angstrom, test region $[$2.4..15$]$ angstrom}}\label{Fig:B1_gap_histogram_6_predictors}
+\end{figure}
+
 
 Fig. 8 and 9 clearly show that in trained region $[$5..7$]$ both 
 algorithms give pretty well prediction where error is relatively small 
@@ -578,14 +581,6 @@ angstrom. It can be observed from histogram on Fig. 10 that error
 distribution is reasonable since the most frequently occurred error 
 values are close to zero.
 
-\begin{figure}[h]
-\centering
-%\includegraphics[width=0.45\textwidth]{media/image14.eps}
-\caption{Fig. 10. Absolute error histogram for function with 7 
-predictors modeled by genetic algorithm according to (3). Two water 
-molecules model. Trained regions $[$2.4..5$]$, $[$7..9$]$ angstrom, test 
-region $[$2.4..15$]$ angstrom.}
-\end{figure}
 
 Similarly, to those results Fig. 11, 12, 13 represent the model 
 according to (4) with 6 predictors and the same other parameters. The 
