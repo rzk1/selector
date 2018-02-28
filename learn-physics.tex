@@ -51,7 +51,7 @@ IMO, best abstracts contain no more than 5 sentences. \old
 \section{Introduction}
 
 Machine learning shows enormous promise for modeling of materials and molecules~\cite{ceriotti-science}. 
-One of the many rapidly growing areas of its application is the development of interatomic potentials---functions that describe the dependence of the interaction energy between atoms on their positions. 
+One of the many rapidly growing area of its application is the development of interatomic potentials---functions that describe the dependence of the interaction energy between atoms on their positions. 
 In the last decade, several approaches based on artificial neural networks (ANNs) and Gaussian process regression (GPR) have been 
 developed to approximate interatomic potentials using accurate quantum mechanical data as training data. 
 The main advantage of carefully calibrated machine-learned potentials (MLPs) is that they combine the high accuracy of quantum mechanical description of interaction between atoms with the computational efficiency of simple human-derived analytical potentials. 
@@ -90,11 +90,9 @@ To demonstrate a feasibility of the outlined approach, we considered only interm
 
 %\red Short description of the general methodology with only basic equations and motivation behind them. All examples related to a specific model (e.g. water) will be presented in Results and Discussion. Description of the code (not be confused with algorithm) should be moved to the Supplementary Information. All results should be presented in Results and Discussion, unless they are necessary to understand our methodology. \old
 
-\subsection{Model energy function} 
+This expression also satisfies another important physical constraints: it makes energy invariant to translations and rotations of the entire molecular system. 
 
-This expression also satisfies another important physical constraints: it makes energy invariant to translations and rotations of the entire molecular system, permutation of physically atoms of the same element.
-
-For any atomistic system, the potential energy as a function of interatomic distances satisfies two constraints: it approaches zero when all atoms are infinitely far from each other and it becomes infinite as the distance between any two atoms approaches zero.
+For any system, the potential energy as a function of interatomic distances satisfies two constraints: it approaches zero when all atoms are infinitely far from each other and it becomes infinite as the distance between any two atoms approaches zero.
 %
 \begin{eqnarray}
 \lim_{\forall R_i \rightarrow \infty} E (\mathbf{R}) = 0 \\
@@ -110,7 +108,7 @@ E (&R_1&, R_2, \ldots, R_N) = \sum_{k=1}^{M_1} \sum_{p=1}^{N} \frac{c_{pk}}{R_p^
 \end{eqnarray}
 %
 where $N = \frac{1}{2}A(A-1)$ is the number of distances $R$ between $A$ atoms, M$_{g}$ is the maximum power for a term containing the product of $g$ distances, $G$ is the maximum ZZZ, $\mathbf{c}$ is the vector of tunable coefficients, $\mathbf{f}$ is the vector of features. 
-\red To make training flexible/ bonds are classified as intermolecular and intramolecular. \old 
+\red To make training flexible/ distances are classified as intermolecular and intramolecular. \old 
 In order to account for the equivalence of atoms of the same element and to make sure that the energy is invariant to permutation of atoms in the input, the fitting coefficients for the physically equivalent features are restricted to be equal. 
 Taking this symmetry into account allows to decrease the number of independent features in the model and training time substantially. 
 For example, the energy of two water molecules depends on 15 distances, only five of which are unique: oxygen-oxygen, intermolecular oxygen-hydrogen, intramolecular oxygen-hydrogen, intermolecular oxygen-hydrogen, intramolecular hydrogen-hydrogen.
@@ -120,7 +118,7 @@ The multipole expansion of intermolecular energies implies that POIDs can adequa
 The flexibility of the model \red is very high\old as it includes many-body beyond simple pairwise interactions through products 
 of POIDs.
 
-\subsection{Systems and training sets} 
+\textbf{Systems and training set.} 
 
 %Lennard-Jones model.
 
@@ -169,9 +167,7 @@ molecules, the full model should be used since the simplified one cannot
 give accurate fit. 
 
 
-\subsection{Training procedure} 
-
-In this model, POIDs and their products serve as \textit{features}. 
+\textbf{Training procedure.} In this model, POIDs and their products serve as \textit{features}. 
 To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters (i.e. linear coefficients in our case) to produce the best fit. 
 The training procedure includes two stages: feature selection and fine-tuning. 
 \red The second part is the improvement of the subset performed using correlation analysis (CA) and searching for alternate features. \old
@@ -185,9 +181,7 @@ $[$the?$]$ genetic algorithm is that it can be easily generalized to
 features with nonlinear fitting coefficients (e.g. exponentially 
 decaying functions can be included in the feature list later).
 
-\subsubsection{Elastic net}
-
-Basic idea and main equation
+\textit{Elastic net}. Basic idea and main equation
 
 As it was mentioned if there is a group of highly correlated variables, 
 then the LASSO selects just one variable from a group and drop the 
@@ -212,9 +206,7 @@ ordinary least squares (OLS) as a fitness function and the criterion
 would be minimum squared error (MSE). BE can be used for linear and 
 nonlinear features; the only difference is different fitness functions.
 
-\subsubsection{Genetic algorithm} 
-
-Very general description of GA. 
+\textit{Genetic algorithm.}\textbf{ }Very general description of GA. 
 Population of chromosomes improved by iterative mutations and 
 corssovers.
 
@@ -234,9 +226,7 @@ randomly selected feature with alternate feature from correlation list.
 The procedure of obtaining lists of alternate features will described in 
 the next two sections.
 
-\subsubsection{Fine-tuning ZZZ} 
-
-The second stage of the training processes 
+\textit{Fine-tuning ZZZ.} The second stage of the training processes 
 is designed to deal with strong multicollinearity between features. 
 Since our goal is to reduce the number of POIDs in the fitting function, 
 most common methods of dealing with linear dependent features such as 
@@ -272,9 +262,7 @@ depends on MinCorrelation variable that influence the formation of
 alternate features lists. The closer this variable to 0 the greater 
 lists and the lower performance. 
 
-\subsubsection{Final stage}
-
-At this stage, we have few features that were 
+\textbf{Final stage. }At this stage, we have few features that were 
 previously selected by either EN or GA. In case of GA this number can be 
 strict since it is equal to chromosome size assigned in GA. For EN this 
 number can be equal to desired value only approximately by varying 
@@ -415,12 +403,6 @@ H-H & 7 & 0.042010518 \\
 \end{tabular*}
 \end{table}
 
-\begin{figure}[h]
-\centering
-%\includegraphics[width=0.45\textwidth]{media/image10.eps}
-\caption{Fig. 6. $G=2$.} \label{Fig:dipoledist}
-\end{figure}
-
 In order to analyze deeper system B, we extended our previous model to two terms of equation~(\ref{eq:tip3p}). Second term might be useful if there exists dependence between our features generated using first part of equation~(\ref{eq:tip3p}). In this case, the second term will improve the goodness of the fit.
 
 % B2
@@ -459,40 +441,54 @@ there exists some relationship between them.
 
 
 \begin{table}[h]
-\caption{\red Not sure which data I should write here \old Table 3. Coefficients for (4) with bond descriptions and corresponding number of distances and powers}
+\caption{Coefficients for two terms of equation (\ref{eq:tip3p}) with distances description}
 \label{Tab:B2 coefficients}
 \begin{tabular}{|l|l|l|l|l|l|}
 \hline
-\textbf{Bond 1} & \textbf{Power 1} & \textbf{Bond 2} & \textbf{
-Power 2} & \textbf{nDist} & \textbf{
-Coefficients} \\
+\textbf{Dist 1} & \textbf{Power 1} & \textbf{Dist 2} & \textbf{
+Power 2} & \textbf{Coef $Ha\cdot\AA^n$} & \textbf{Description} \\
 \hline
-H-H & -2 & � & � & 4 & 0.171764693 \\
+H-H & -1 & - & - & 0.151742873 & - \\
 \hline
-O-O & -1 & H-H & -1 & 4 & 0.180766608 \\
+O-H & -1 & - & - & -0.161668916 & - \\
 \hline
-O-O & -6 & O-H & -4 & 4 & 23.07894762 \\
+O-O & -1 & O-H & -1 & 0.941311761 & Fig. \ref{Fig:B2 Dist} left \\
 \hline
-O-H & -1 & H-H & -1 & 8 & -0.213562728 \\
+O-H & -1 & H-H & -1 & -0.413301835 & Fig. \ref{Fig:B2 Dist} right \\
 \hline
-O-H & -1 & H-H & -1 & 8 & 0.036990729 \\
+H-H & -3 & - & - & 0.905899846 & - \\
+\hline
+O-O & -3 & - & - & -5.673704379 & - \\
+\hline
+H-H & -3 & - & - & -0.863512189 & - \\
+\hline
+O-O & -3 & - & - & 6.283354505 & - \\
+\hline
+O-H & -4 & H-H & -4 & 1.034325338 & Fig. \ref{Fig:B2 Dist} right \\
+\hline
+O-O & -15 & - & - & -1800.166449 & - \\
+\hline
+H-H & -7 & - & - & 0.093808008 & - \\
+\hline
+O-O & -1 & - & - & 0.007360099 & - \\
 \hline
 \end{tabular}
 \end{table}
 
-%\begin{table}[h]
-%\caption{Table 4. Parameters that describe goodness of fit with coefficients from Table 3}
-%\begin{tabular}{|l|l|l|l|l|l|l|l|}
-%\hline
-%\textbf{MSE Train} & \textbf{RMSE Train} & \textbf{R2 Train} & 
-%\textbf{R2 Adjusted Train} & \textbf{MSE Test} & \textbf{RMSE Test
-%} & \textbf{R2 Test} & \textbf{R2 Adjusted Test} \\
-%\hline
-%1.68E-07 & 0.00041 & 0.973192 & 0.97316 & 1.65E-07 & 0.000406 & 0.960991 
-%& 0.960807 \\
-%\hline
-%\end{tabular}
-%\end{table}
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/water_distances_1.eps}
+\caption{Features description. Model B2. On the left all four possible configutations for the product of O-O and O-H imtermolecular distances are shown. All four configurations belong to one single feature type 56. On the right two possible feature types 56 and 57 are shown. Features represent product of O-H and H-H distances. Type 56 contains common atom, type 57 does not. Only one out of eight possible configurations of each type are shown.}\label{Fig:B2 Dist}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/water_distances_2.eps}
+\caption{Features description. Model C. On the left all three possible configutations for type 66 for the product of O-O and O-O imtermolecular distances are shown. On the right there are four types of features for product O-H and O-H. Only one configuration for each feature type is shown. Types 56, 57, 66 and 67 contain 6, 12, 18 and 30 products respectively.}\label{Fig:C Dist1}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/water_distances_3.eps}
+\caption{Features description. Model C. On the left there are three types of features for product O-O and O-H. Only one configuration for each feature type is shown. All types contain 12 products. On the right there are four types of features for product O-H and H-H. Only one configuration for each feature type is shown. Types 56, 57, 66 and 67 contain 24, 24, 24 and 72 products respectively.}\label{Fig:C Dist2}
+\end{figure}
 
 \subsection{System C: three water molecules}
 
@@ -519,21 +515,20 @@ After four predictors increasing numbers of features does not give significant i
 \end{figure}
 
 \begin{table}[h]
-\caption{Coefficients for system C according to two first terms of equation (\ref{eq:tip3p}) with bond descriptions and corresponding number of distances and powers}
+\caption{Coefficients for system C according to two first terms of equation (\ref{eq:tip3p}) with distances description and corresponding number of distances and powers}
 \label{Tab:C coefficients}
 \begin{tabular}{|l|l|l|l|l|l|}
 \hline
-\textbf{Bond 1} & \textbf{Power 1} & \textbf{Bond 2} & \textbf{
-Power 2} & \textbf{nDist} & \textbf{
-Coefficients} \\
+\textbf{Dist 1} & \textbf{Power 1} & \textbf{Dist 2} & \textbf{
+Power 2} & \textbf{Coef $Ha\cdot\AA^n$} & \textbf{Description} \\
 \hline
-O-H & -3 & O-H & -3 & 18 & 0.349485411 \\
+O-H & -3 & O-H & -3 & 0.349485411 & Fig. \ref{Fig:C Dist1} right \\
 \hline
-O-O & -3 & O-O & -3 & 3 & 1.593740258 \\
+O-O & -3 & O-O & -3 & 1.593740258 & Fig. \ref{Fig:C Dist1} left \\
 \hline
-O-O & -3 & O-H & -3 & 12 & -0.910662734 \\
+O-O & -3 & O-H & -3 & -0.910662734 & Fig. \ref{Fig:C Dist2} left \\
 \hline
-O-H & -4 & H-H & -4 & 24 & -0.201270344 \\
+O-H & -4 & H-H & -4 & -0.201270344 & Fig. \ref{Fig:C Dist2} right \\
 \hline
 \end{tabular}
 \end{table}
@@ -599,34 +594,8 @@ according to (4) with 6 predictors and the same other parameters. The
 fit is even better than if we used eq. (3), but general behavior is 
 similar.
 
-\begin{figure}[h]
-\centering
-%\includegraphics[width=0.45\textwidth]{media/image15.eps}
-\caption{Fig. 11. Average bin error vs. average distance between centers 
-of masses. Two water molecules model. Single distance features from (4) 
-with 6 predictors and Gaussian Process. Trained regions $[$2.4..5$]$, 
-$[$7..9$]$ angstrom, test region $[$2.4..15$]$ angstrom}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-%\includegraphics[width=0.45\textwidth]{media/image16.eps}
-\caption{Fig. 12. Average energy per bin vs. average distance between 
-centers of masses. Two water molecules model. True energy plot. Single 
-distance features from (4) with 6 predictors and Gaussian Process. 
-Trained regions $[$2.4..5$]$, $[$7..9$]$ angstrom, test region 
-$[$2.4..15$]$ angstrom}
-\end{figure}
 
 
-\begin{figure}[h]
-\centering
-%\includegraphics[width=0.45\textwidth]{media/image17.eps}
-\caption{Fig. 13. Absolute error histogram for function with 6 
-predictors modeled by genetic algorithm according to (4). Two water 
-molecules model. Trained regions $[$2.4..5$]$, $[$7..9$]$ angstrom, test 
-region $[$2.4..15$]$ angstrom.}
-\end{figure}
 
 Another important aspect is to examine the dependence of goodness of fit 
 on number of training points. To do that we used model based on eq. (4) 
