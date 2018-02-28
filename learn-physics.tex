@@ -663,9 +663,12 @@ Varying those parameters, it is possible to find the local maxima of the
 function to achieve the best possible fit. Either optimizer provided by 
 scipy.optimize.fmin\_l\_bfgs\_b or user defined optimizer that must have 
 specific signature can be used to attune kernels and therefore GP 
-regressor to give optimal results. Since local maxima is a function of 
-two main variables, to find optimal solution we used a grid with varying 
-scale (Fig. 2). Both optimizers gave almost identical results. 
+regressor to give optimal results. Since local maxima is a function of two main variables, to find optimal solution we used a stochastic hill climbing algorithm with random restart (Fig \ref{Fig:B1_Gaussian_path}). 
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/B1_Gaussian_path.eps}
+\caption{Gaussian path by stochastic hill climbig with 10 random restarts. Best gaussian result coresponds to blue dot on the graph. System B1}\label{Fig:B1_Gaussian_path}
+\end{figure}
 
 \section{Acknowledgments} 
 
