@@ -302,7 +302,7 @@ power to some reasonable number. Our experiments show that for single
 distance max power M$_{1}$ from (3) value 15 will be sufficient. For 
 features that contain product of distances max power M$_{2}$ from (4) 
 equal to 7. Increasing those number to greater value does not give any 
-significant improvement, but augments number of features and slow down 
+significant improvement, but augments number of features and slows down 
 the fitting procedure. Table~\ref{Tab:systems}.
 
 \begin{table*}
@@ -358,9 +358,7 @@ Please see Eq.~(\ref{eq:tip3p})
 
 \subsection{System B: water dimer}
 
-\red Use {\textbackslash}label and {\textbackslash}ref to keep track of numbering. Font in figures must be as large the font in figure caption.  All physical quantities must have labels. Energy units are kJ$\cdot$mol$^{-1}$. 1 hartree = 2625.499638~kJ$\cdot$mol$^{-1}$. \old
-
-In this part, we focus on two water molecules model. First of all, we need to analyze how RMSE of the function obtained from fitting procedure depends on number of predictors. In simplest case we have only the first term of equation (\ref{eq:tip3p}). Fig. \ref{Fig:1} shows that when we have a fit with more than 6 variables, RMSE decreases very slightly. If we were to examine what machine learned from dataset first of all it would be wise to compare classic model given by equation \ref{eq:tip3p} with newly found fit. For 5 predictors, the results are summarized in Table \ref{Tab:ZZZ}. Its RMSE=0.000706839 Ha is even better than the one obtained with classic formula which is 0.000742766 Ha. Since algorithm saves all explored states, we discovered that there are many states with similar goodness of the fit. The one described above is just the best one obtained for this particular configuration (training points are in the interval 2.8A to 5.6A).
+In this part, we focus on two water molecules model. First of all, we need to analyze how RMSE of the function obtained from fitting procedure depends on number of predictors. In simplest case (System B1 Table \ref{Tab:systems}) we have only the first term of equation (\ref{eq:tip3p}). Fig. \ref{Fig:B1_RMSE} shows that if we have a fit with more than 6 variables, RMSE decreases very slightly. If we were to examine what machine learned from dataset first of all it would be wise to compare classic model given by equation (\ref{eq:tip3p}) with newly found fit. For 5 predictors, the results are summarized in Table \ref{Tab:B1 coefficients}. Its RMSE=0.0007068 Ha is even better than the one obtained with classic formula which is 0.0007428 Ha. Since algorithm saves all explored states, we discovered that there are many states with similar goodness of the fit. The one described above is just the best result obtained for this particular configuration (training points are in the interval 2.8A to 5.6A).
 
 \begin{figure}
 \includegraphics[width=0.45\textwidth]{media/B1_Single_GA_PATH_RMSE.eps}
@@ -403,7 +401,7 @@ H-H & 7 & 0.04201 \\
 \end{tabular*}
 \end{table}
 
-In order to analyze deeper system B, we extended our previous model to two terms of equation~(\ref{eq:tip3p}). Second term might be useful if there exists dependence between our features generated using first part of equation~(\ref{eq:tip3p}). In this case, the second term will improve the goodness of the fit.
+In order to analyze deeper system B, we extended our previous model to two terms (System B2 Table  \ref{Tab:systems}) of equation~(\ref{eq:tip3p}). Second term might be useful if there exists dependence between our features generated using first part of equation~(\ref{eq:tip3p}). In this case, the second term will improve the goodness of the fit.
 
 % B2
 \begin{figure}
@@ -433,11 +431,8 @@ In order to analyze deeper system B, we extended our previous model to two terms
 \end{figure}
 
 
-If we take a closer look at details of fit 
-with 5 predictors we could observe that the goodness of fit if better. 
-The algorithm chose 4 out of 5 features that contain product of 
-distances which signifies that they are not completely independent and 
-there exists some relationship between them.
+For the same number of predictors, lets say 5 system B2 gives better goodness of the fit than system B1 (RMSE.B1 = 0.0007068 Ha and RMSE.B2 = 0.0005661)   
+The algorithm chose 3 out of 5 features that contain product of distances which signifies that they are not completely independent and there exists some relationship between them. Plot of RMSE vs. number of nonzero coefficients for system B2 \ref{Fig:B2_RMSE} shows that line becomes gentle approximately near 12. Increasing number of predictors after 12 does not improve significantly fitting results. Coefficients for that particular fit are shown in Table \ref{Tab:B2 coefficients} as well as links to figures that describes features that contain products of distances (Fig. \ref{Fig:B2 Dist}).
 
 
 \begin{table}[h]
