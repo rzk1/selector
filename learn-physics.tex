@@ -210,85 +210,70 @@ nonlinear features; the only difference is different fitness functions.
 Population of chromosomes improved by iterative mutations and 
 corssovers.
 
-We used classic genetic algorithm to select best subset of features from 
-the initial set. Since the number of desired selected features is 
-relatively small and for our model does not exceeds 20 features OLS can 
-be used as a fitness function. GA contains many parameters that can be 
-varied in order to achieve better performance and faster convergence. 
-Population size, chromosome size, mutation probability, elite fraction 
-(fraction of good chromosomes), mutation fraction / crossover fraction, 
-mutation methods: correlated or random, crossover method: random or 
-best. Stopping criteria are elapsed time, number of iterations and 
-tolerance. 
+We used classic genetic algorithm to select best subset of features from the initial set. Since the number of desired selected features is relatively small and for our model does not exceeds 20 features OLS can be used as a fitness function. The goal of GA is to find the best possible combination of features provided by large feature set. GA itself is been used as a search algorithm; at the beginning it converges relatively fast but very slow at the end. The ideal fitness value is equal to 0. After some iterations (its number depends on many parameters and on dataset as well) GA stops improving its best child, therefore it terminates and gives its best result to A* search. GA contains many parameters that can be varied in order to achieve better performance and faster convergence.\\ 
+GA parameters:\\
+'GA population size': 100,\\
+'GA chromosome size': 15,\\
+'GA stop time': 600,\\
+'GA max generations': 200,\\
+'GA mutation probability': 0.3,\\
+'GA mutation interval': [1, 4],\\
+'GA elite fraction': 0.5,\\
+'GA mutation crossover fraction': 0.5,\\
+'GA crossover fraction interval': [0.6, 0.4],\\
+'GA use correlation for mutation': False,\\
+'GA min correlation for mutation': 0.8,\\
+'Random' or 'Best' - rank genes in each chromosome and take most important for crossover.\\
+'GA crossover method': 'Random',\\
+'Random' or 'Correlated' - pool with candidates for possible replacement created through correlation matrix rule.\\
+'GA mutation method': 'Random'\\
+            
+Stopping criteria are elapsed time, number of iterations and tolerance. 
 
-The main difference from classic GA is that mutation function replaces 
-randomly selected feature with alternate feature from correlation list. 
-The procedure of obtaining lists of alternate features will described in 
-the next two sections.
+The main difference from classic GA is that mutation function replaces randomly selected feature with alternate feature from correlation list. 
 
-\textit{Fine-tuning ZZZ.} The second stage of the training processes 
-is designed to deal with strong multicollinearity between features. 
-Since our goal is to reduce the number of POIDs in the fitting function, 
-most common methods of dealing with linear dependent features such as 
-principal component analysis are not applicable. We designed a procedure 
-for eliminating/adding/replacing collinear features with two goals: 
-compact and accurate. 
+\textit{Using Pearson correlation coefficients.} In general, our algorithm is designed in such a way that it can deal with strong multicollinearity between features. Since our goal is to reduce the number of POIDs in the fitting function, most common methods of dealing with linear dependent features such as principal component analysis are not applicable. We designed a procedure for eliminating/adding/replacing collinear features with two goals: compact and accurate. To find out how a linear correlation between all our features we calculated the correlation matrix (i.e. matrix of Pearson correlation coefficients). Then we create a list of dependent features for each variable using threshold MinCorrelation = some number between 0 and 1 for cut off. If correlation between two features is greater than MinCorrelation they are considered to be linearly dependent. Suppose we have only 5 features and our correlation matrix looks like in \ref{Correlation_matrix}. If we set MinCorrelation = 0.8 than Variable X1 will have a list of dependent variables $[$X2, X3$]$, X2 will have $[$X1, X3$]$, X3=$>$ $[$X1, X2$]$, X4 and will have empty lists which means X4 is linearly independent within chosen tolerance. The closer MinCorrelation to zero - the greater list of dependent variables, therefore the slower the computation but the more accurate will be the final result. This approach can be useful in two cases: mutation method for GA can be chosen as 'Correlated', so mutating gene will be replaced by another one from the list; A* search uses this list in trials to create successors.
 
-focused on eliminating collinear variables in such a way that final fit 
-will contain only one feature for each collinear group. It is not the 
-ideal representation but it allows us having good enough fit minimize 
-number of variables that would give a compact energy equation. To find 
-out how a linear correlation between all our features we calculated 
-the correlation matrix (i.e. matrix of Pearson correlation coefficients). Next step is to 
-create a list of dependent features for each variable using threshold 
-MinCorrelation between 0 and 1 for cut off. If correlation between two 
-features is greater than MinCorrelation they are considered to be 
-linearly dependent. Suppose we have only 5 features and our correlation 
-matrix looks like in Fig. 1. If we set MinCorrelation = 0.8 than 
-Variable X1 will have a list of dependent variables $[$X2, X3$]$, X2 
-will have $[$X1, X3$]$, X3=$>$ $[$X1, X2$]$, X4 and will have empty 
-lists that means they are linearly independent within chosen tolerance. 
-The closer MinCorrelation to zero - the greater list of dependent 
-variables. 
+\textit{A* (depth first search tree) algorithm}. Its goal is keeping the number of predictors find better subset of features that have better fitness then initial provided by either elastic net or genetic algorithm. A* uses list of dependent variables described above and tries to choose alternate features that are related to the original ones but gives better fit. A* is greedy depth first search tree algorithm with heuristic function that speeds up computation by decreasing the number of nodes to be evaluated. General form of its fitness function if f(n) = g(n) + h(n) where g(n) is path cost function that in our case represent the level of node n in search tree and h(n) - heuristic function which is "shortest path" to the goal. Since our goal is fitness = 0, then we can use MSE as a parameter for h(n). 
 
-Its goal is keeping the number of predictors find the best subset of 
-features that gives lowest MSE. BF uses list of dependent variables 
-described above and tries to choose alternate features that are related 
-to the original ones but gives better fit. Algorithm description. 
-Algorithm stops if for any feature from the selected subset no better 
-alternatives was found. Since the subset contains only 20 or less 
-features in our case the algorithm works relatively fast. Its speed 
-depends on MinCorrelation variable that influence the formation of 
-alternate features lists. The closer this variable to 0 the greater 
-lists and the lower performance. 
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/B1_Single_Energy_5_predictors.eps}
+\caption{\red{A* tree}\old}\label{Fig:A_star_tree}
+\end{figure}
 
-\textbf{Final stage. }At this stage, we have few features that were 
-previously selected by either EN or GA. In case of GA this number can be 
-strict since it is equal to chromosome size assigned in GA. For EN this 
-number can be equal to desired value only approximately by varying 
-regularization strength of L1 portions of EN. Let's say we have 20 
-preselected features from GA. The first goal of final fit is to improve 
-MSE by replacing selected features which can have linearly dependent 
-alternatives and are not selected. Second goal if this procedure is to 
-have 20 sets of different features with number of predictors decreasing 
-from 20 to 1 in order to see how the goodness of the fit is getting 
-worth with decreasing number of predictors which can give a possibility 
-to analyze the remaining features and to try to give them physical 
-interpretation. The loop has few steps:
+In example \ref{Fig:A_star_tree} the root is the node that contain chromosome received from either GA or ENet. A* tries to produce children nodes according to its selection criterion (details later) and put them in the sorted queue using binary search. Each new node that goes inside the queue finds its place according to fitness function - lowest first, therefore queue is always sorted. Extraction from queue works exactly as for stack: using pop(). At each iteration A* pops the best child from queue and tries to create its children according to selection criterion and according to correlation coefficients list. Each successfully created child node goes into queue. Algorithm remembers the best node and stops when queue is empty or its working time without improving best node exceeds some value assigned as its parameter.\\
+\textit{A* selection criteria.} There are few predefined stopping criteria for algorithm:
+Fast: each newly created node compares with best node and goes into queue only if it has better fitness. Algorithm works as one branch of depth first search in this case.
+Parent: if newly created node is better than its parent it goes to queue.
+Level: if the fitness of newly created node is the best that exist on its level (see \ref{Fig:A_star_tree}) it goes into queue. At the same time when node pop() from queue its fitness compares with best for its level since by the time algorithm reached that node level's fitness could be improved already and this node does not agree with selection criteria. This approach gives good balance between computation speed and accuracy of the fit and has been used for most our computations.
+Slow: all nodes produced go to queue and algorithm becomes breadth first search. It scans through all tree and can find the best solution. However, its time complexity O(n**k) where k - deepest level and n - number of variables makes it unmanageable in most cases. 
 
-\newcounter{numberedCntH}
-\begin{enumerate}
-\item Improve the fit keeping the number of predictors (BF)
-\item Save best possible fit for future analysis
-\item Remove worst feature from feature set defined by fitness function: 
-worst feature is the one that gives smallest change in score after 
-removing (BE)
-\item Check if number of predictors is greater than 2, otherwise stop
-\setcounter{numberedCntH}{\theenumi}
-\end{enumerate}
-At the end of final stage, we have n sets of linear or exponential 
-predictors with decreasing number from n to 2. As a result, we can see 
-how the goodness of the fit depends on the number of predictors.
+
+
+
+
+
+\begin{table}[h]
+\centering
+\caption{Correlation matrix example for 5 variables}\label{Correlation_matrix}
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+� & X1 & X2 & X3 & X4 & X5 \\
+\hline
+X1 & 1.00 & 0.95 & 0.90 & 0.30 & 0.20 \\
+\hline
+X2 & 0.95 & 1.00 & 0.85 & 0.70 & 0.30 \\
+\hline
+X3 & 0.90 & 0.85 & 1.00 & 0.60 & 0.40 \\
+\hline
+X4 & 0.30 & 0.70 & 0.60 & 1.00 & 0.25 \\
+\hline
+X5 & 0.20 & 0.30 & 0.40 & 0.25 & 1.00 \\
+\hline
+\end{tabular}
+\end{table}
+
+
 
 
 \section{Results and discussion}
@@ -297,10 +282,7 @@ The last part summarizes results in report file which include n models
 with corresponding fitting coefficients and creates plots that represent 
 prediction of each model using only test set. It also compares our fit 
 with gaussian process fit accomplished using the same training set. In 
-order to have manageable number of features we have to restrict max 
-power to some reasonable number. Our experiments show that for single 
-distance max power M$_{1}$ from (3) value 15 will be sufficient. For 
-features that contain product of distances max power M$_{2}$ from (4) 
+order to have manageable number of features we have to restrict max power to some reasonable number. Our experiments show that for single distance max power M$_{1}$ from (\ref{eq:tip3p}) value 15 will be sufficient. For features that contain product of distances max power M$_{2}$ from (\ref{eq:tip3p}) 
 equal to 7. Increasing those number to greater value does not give any 
 significant improvement, but augments number of features and slows down 
 the fitting procedure. Table~\ref{Tab:systems}.
@@ -333,14 +315,6 @@ Configurations & Grid & $R_{OO}$ bins & $R_{OO}$ bins & AIMD\\
 
 Refer to SI for a discussion of LASSO - a special case of EN.
 
-To results: However, in the fine-tuning algorithm makes greater 
-improvement of the fitting. Usually, using MinCorrelation = 0.8 
-improvement 10\% - 20\% can be achieved if we use GA for obtaining 
-initial subset. If we use EN, this improvement can be even greater since 
-EN works faster than GA but gives worst results.
-
-%RZK: do we learn anything from this simple model?
-%\subsection{System 0: Lennard-Jones potential?}
 
 \subsection{System A: TIP3P water dimer}
 
@@ -410,18 +384,18 @@ In order to analyze deeper system B, we extended our previous model to two terms
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=0.45\textwidth]{media/B2_Energy_8_predictors.eps}
-\caption{Dependence of enegry on the average disdance between centers of masses. Fit for 8 predictors obtained by GA + A* search and gaussian process. System B2}\label{Fig:B2_Energy}
+\includegraphics[width=0.45\textwidth]{media/B2_Energy_12_predictors.eps}
+\caption{Dependence of enegry on the average disdance between centers of masses. Fit for 8 predictors obtained by GA + A* search and gaussian process. System B2}\label{Fig:B2_Energy_12_predictors}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=0.45\textwidth]{media/B2_Error_8_predictors.eps}
-\caption{Dependence of error on the average disdance between centers of masses. Fit for 8 predictors obtained by GA + A* search and gaussian process. System B2}\label{Fig:B2_RMSE_8_predictors}
+\includegraphics[width=0.45\textwidth]{media/B2_Error_12_predictors.eps}
+\caption{Dependence of error on the average disdance between centers of masses. Fit for 8 predictors obtained by GA + A* search and gaussian process. System B2}\label{Fig:B2_RMSE_12_predictors}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=0.45\textwidth]{media/B2_GA_energy_error_histogram_8_predictors.eps}
-\caption{Energy error histogram for 8 predictors. Fit obtained by GA + A* search. System B2}\label{Fig:B2_histogram_8_predictors}
+\includegraphics[width=0.45\textwidth]{media/B2_GA_energy_error_histogram_12_predictors.eps}
+\caption{Energy error histogram for 8 predictors. Fit obtained by GA + A* search. System B2}\label{Fig:B2_histogram_12_predictors}
 \end{figure}
 
 % B2 VIP 
@@ -432,7 +406,7 @@ In order to analyze deeper system B, we extended our previous model to two terms
 
 
 For the same number of predictors, lets say 5 system B2 gives better goodness of the fit than system B1 (RMSE.B1 = 0.0007068 Ha and RMSE.B2 = 0.0005661)   
-The algorithm chose 3 out of 5 features that contain product of distances which signifies that they are not completely independent and there exists some relationship between them. Plot of RMSE vs. number of nonzero coefficients for system B2 \ref{Fig:B2_RMSE} shows that line becomes gentle approximately near 12. Increasing number of predictors after 12 does not improve significantly fitting results. Coefficients for that particular fit are shown in Table \ref{Tab:B2 coefficients} as well as links to figures that describes features that contain products of distances (Fig. \ref{Fig:B2 Dist}).
+The algorithm chose 3 out of 5 features that contain product of distances which signifies that they are not completely independent and there exists some relationship between them. Plot of RMSE vs. number of nonzero coefficients for system B2 \ref{Fig:B2_RMSE} shows that line becomes gentle approximately near 12. Increasing number of predictors after 12 does not improve significantly fitting results. Coefficients for that particular fit are shown in Table \ref{Tab:B2 coefficients} as well as links to figures that describes features that contain products of distances (Fig. \ref{Fig:B2 Dist}). Plot of average error vs. distance between centers of masses, average energy vs. distance between centers of masses for system B2 and gaussian process are Fig. \ref{Fig:B2_RMSE_12_predictors} and \ref{Fig:B2_Energy_12_predictors} respectively and energy error histogram is represented by Fig. \ref{Fig:B2_histogram_12_predictors}
 
 
 \begin{table}[h]
@@ -690,27 +664,7 @@ large when significant multicollinearity issues exist. Multicollinearity
 can lead to less reliable probability values and larger confidence 
 intervals.
 
-\begin{table}[h]
-\centering
-\begin{tabular}{|l|l|l|l|l|l|}
-\hline
-� & X1 & X2 & X3 & X4 & X5 \\
-\hline
-X1 & 1.00 & 0.95 & 0.90 & 0.30 & 0.20 \\
-\hline
-X2 & 0.95 & 1.00 & 0.85 & 0.70 & 0.30 \\
-\hline
-X3 & 0.90 & 0.85 & 1.00 & 0.60 & 0.40 \\
-\hline
-X4 & 0.30 & 0.70 & 0.60 & 1.00 & 0.25 \\
-\hline
-X5 & 0.20 & 0.30 & 0.40 & 0.25 & 1.00 \\
-\hline
-\end{tabular}
-\end{table}
 
-
-Fig. 2. \textit{Correlation matrix example for 5 variables}
 \red{Best first search tree algorithm with different parameters for convergence;
 Stochastic hill climbing algorithm with random restart;
 Genetic algorithm: two types of selection for crossover, using Pearson  correlation coefficients for mutation;
