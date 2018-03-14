@@ -241,12 +241,16 @@ The main difference from classic GA is that mutation function replaces randomly 
 \caption{\red{A* tree}\old}\label{Fig:A_star_tree}
 \end{figure}
 
-In example \ref{Fig:A_star_tree} the root is the node that contain chromosome received from either GA or ENet. A* tries to produce children nodes according to its selection criterion (details later) and put them in the sorted queue using binary search. Each new node that goes inside the queue finds its place according to fitness function - lowest first, therefore queue is always sorted. Extraction from queue works exactly as for stack: using pop(). At each iteration A* pops the best child from queue and tries to create its children according to selection criterion and according to correlation coefficients list. Each successfully created child node goes into queue. Algorithm remembers the best node and stops when queue is empty or its working time without improving best node exceeds some value assigned as its parameter.\\
+In example shown on Fig. \ref{Fig:A_star_tree} the root is the node that contain chromosome received from either GA or ENet. A* tries to produce children nodes according to its selection criterion (details later) and put them in the sorted queue using binary search. Each new node that goes inside the queue finds its place according to fitness function - lowest first, therefore queue is always sorted. Extraction from queue works exactly as for stack: using pop(). At each iteration A* pops the best child from queue and tries to create its children according to selection criterion and according to correlation coefficients list. Each successfully created child node goes into queue. Algorithm remembers the best node and stops when queue is empty or its working time without improving best node exceeds some value assigned as its parameter.\\
 \textit{A* selection criteria.} There are few predefined stopping criteria for algorithm:
 Fast: each newly created node compares with best node and goes into queue only if it has better fitness. Algorithm works as one branch of depth first search in this case.
 Parent: if newly created node is better than its parent it goes to queue.
 Level: if the fitness of newly created node is the best that exist on its level (see \ref{Fig:A_star_tree}) it goes into queue. At the same time when node pop() from queue its fitness compares with best for its level since by the time algorithm reached that node level's fitness could be improved already and this node does not agree with selection criteria. This approach gives good balance between computation speed and accuracy of the fit and has been used for most our computations.
-Slow: all nodes produced go to queue and algorithm becomes breadth first search. It scans through all tree and can find the best solution. However, its time complexity O(n**k) where k - deepest level and n - number of variables makes it unmanageable in most cases. 
+Slow: all nodes produced go to queue and algorithm becomes breadth first search. It scans through all tree and can find the best solution. However, its time complexity O(n**k) where k - deepest level and n - number of variables makes it unmanageable in most cases. \\
+
+\textit{Backward elimination}\old \\
+
+\textit{After GA} \old we have desired and relatively small number of features. I we want to use elastic net instead we can vary its regularization strength and obtain desired number of features but not exact. Then this number of variables can be decreased to required 
 
 
 
