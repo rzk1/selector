@@ -207,8 +207,7 @@ would be minimum squared error (MSE). BE can be used for linear and
 nonlinear features; the only difference is different fitness functions.
 
 \textit{Genetic algorithm.}\textbf{ }Very general description of GA. 
-Population of chromosomes improved by iterative mutations and 
-corssovers.
+Population of chromosomes improved by iterative mutations and crossovers.
 
 We used classic genetic algorithm to select best subset of features from the initial set. Since the number of desired selected features is relatively small and for our model does not exceeds 20 features OLS can be used as a fitness function. The goal of GA is to find the best possible combination of features provided by large feature set. GA itself is been used as a search algorithm; at the beginning it converges relatively fast but very slow at the end. The ideal fitness value is equal to 0. After some iterations (its number depends on many parameters and on dataset as well) GA stops improving its best child, therefore it terminates and gives its best result to A* search. GA contains many parameters that can be varied in order to achieve better performance and faster convergence.\\ 
 GA parameters:\\
@@ -232,37 +231,46 @@ Stopping criteria are elapsed time, number of iterations and tolerance.
 
 The main difference from classic GA is that mutation function replaces randomly selected feature with alternate feature from correlation list. 
 
-\textit{Using Pearson correlation coefficients.} In general, our algorithm is designed in such a way that it can deal with strong multicollinearity between features. Since our goal is to reduce the number of POIDs in the fitting function, most common methods of dealing with linear dependent features such as principal component analysis are not applicable. We designed a procedure for eliminating/adding/replacing collinear features with two goals: compact and accurate. To find out how a linear correlation between all our features we calculated the correlation matrix (i.e. matrix of Pearson correlation coefficients). Then we create a list of dependent features for each variable using threshold MinCorrelation = some number between 0 and 1 for cut off. If correlation between two features is greater than MinCorrelation they are considered to be linearly dependent. Suppose we have only 5 features and our correlation matrix looks like in \ref{Correlation_matrix}. If we set MinCorrelation = 0.8 than Variable X1 will have a list of dependent variables $[$X2, X3$]$, X2 will have $[$X1, X3$]$, X3=$>$ $[$X1, X2$]$, X4 and will have empty lists which means X4 is linearly independent within chosen tolerance. The closer MinCorrelation to zero - the greater list of dependent variables, therefore the slower the computation but the more accurate will be the final result. This approach can be useful in two cases: mutation method for GA can be chosen as 'Correlated', so mutating gene will be replaced by another one from the list; A* search uses this list in trials to create successors.
+\textit{Using Pearson correlation coefficients.} In general, our algorithm is designed in such a way that it can deal with strong multicollinearity between features. Since our goal is to reduce the number of POIDs in the fitting function, most common methods of dealing with linear dependent features such as principal component analysis are not applicable. We designed a procedure for eliminating/adding/replacing collinear features with two goals: compact and accurate. To find out how a linear correlation between all our features we calculated the correlation matrix (i.e. matrix of Pearson correlation coefficients). Then we create a list of dependent features for each variable using threshold MinCorrelation = some number between 0 and 1 for cut off. If correlation between two features is greater than MinCorrelation they are considered to be linearly dependent. Suppose we have only 5 features and our correlation matrix looks like in \ref{Correlation_matrix}. If we set MinCorrelation = 0.8 than Variable X1 will have a list of dependent variables $[$X2, X3$]$, X2 will have $[$X1, X3$]$, X3=$>$ $[$X1, X2$]$, X4 and will have empty lists which means X4 is linearly independent within chosen tolerance. The closer MinCorrelation to zero - the greater list of dependent variables, therefore the slower the computation but the more accurate will be the final result. This approach can be useful in two cases: mutation method for GA can be chosen as 'Correlated', so mutating gene will be replaced by another one from the list; A* search uses this list in trials to create successors. When MinCorrelation approaches to 0 mutation procedure in GA becomes 'Random'. However, in A* the number of children nodes increases, therefore increases the probability of improving the fitness.
 
 \textit{A* (depth first search tree) algorithm}. Its goal is keeping the number of predictors find better subset of features that have better fitness then initial provided by either elastic net or genetic algorithm. A* uses list of dependent variables described above and tries to choose alternate features that are related to the original ones but gives better fit. A* is greedy depth first search tree algorithm with heuristic function that speeds up computation by decreasing the number of nodes to be evaluated. General form of its fitness function if f(n) = g(n) + h(n) where g(n) is path cost function that in our case represent the level of node n in search tree and h(n) - heuristic function which is "shortest path" to the goal. Since our goal is fitness = 0, then we can use MSE as a parameter for h(n). 
 
 \begin{figure}
-\includegraphics[width=0.45\textwidth]{media/B1_Single_Energy_5_predictors.eps}
-\caption{\red{A* tree}\old}\label{Fig:A_star_tree}
+\includegraphics[width=0.45\textwidth]{media/water_distances_3.eps}
+\caption{A* search tree}\label{Fig:A_star_tree}
 \end{figure}
 
-In example shown on Fig. \ref{Fig:A_star_tree} the root is the node that contain chromosome received from either GA or ENet. A* tries to produce children nodes according to its selection criterion (details later) and put them in the sorted queue using binary search. Each new node that goes inside the queue finds its place according to fitness function - lowest first, therefore queue is always sorted. Extraction from queue works exactly as for stack: using pop(). At each iteration A* pops the best child from queue and tries to create its children according to selection criterion and according to correlation coefficients list. Each successfully created child node goes into queue. Algorithm remembers the best node and stops when queue is empty or its working time without improving best node exceeds some value assigned as its parameter.\\
+In example shown on Fig.\ref{Fig:A_star_tree} the root is the node that contain chromosome received from either GA or ENet + BE. A* tries to produce children nodes according to its selection criterion (details later) and put them in the sorted queue using binary search. Each new node that goes inside the queue finds its place according to fitness function - lowest first, therefore queue is always sorted. Extraction from queue works exactly as for stack: using pop(). At each iteration A* pops the best child from queue and tries to create its children according to selection criterion and according to correlation coefficients list. Each successfully created child node goes into queue. Algorithm remembers the best node and stops when queue is empty or its working time without improving best node exceeds some value assigned as its parameter.\\
 \textit{A* selection criteria.} There are few predefined stopping criteria for algorithm:
 Fast: each newly created node compares with best node and goes into queue only if it has better fitness. Algorithm works as one branch of depth first search in this case.
 Parent: if newly created node is better than its parent it goes to queue.
 Level: if the fitness of newly created node is the best that exist on its level (see \ref{Fig:A_star_tree}) it goes into queue. At the same time when node pop() from queue its fitness compares with best for its level since by the time algorithm reached that node level's fitness could be improved already and this node does not agree with selection criteria. This approach gives good balance between computation speed and accuracy of the fit and has been used for most our computations.
 Slow: all nodes produced go to queue and algorithm becomes breadth first search. It scans through all tree and can find the best solution. However, its time complexity O(n**k) where k - deepest level and n - number of variables makes it unmanageable in most cases. \\
+A* parameters:\\
+'A goal': 1e-18 means tolerance of zero; \\
+'A stop time': 200 in seconds - time of A* working without improving best fit after which algorithm terminates;\\
+'A max queue': 1000 - maximal length of queue of waiting nodes, weakest node after this length drops.\\
+            
+\textit{Backward elimination} \old examines each feature in subset and drops the worst one according to fitness function results. Each call removes one worst feature.\\
 
-\textit{Backward elimination}\old \\
-
-\textit{After GA} \old we have desired and relatively small number of features. I we want to use elastic net instead we can vary its regularization strength and obtain desired number of features but not exact. Then this number of variables can be decreased to required 
-
-
-
-
-
+\textit{After GA or ENet} \old we have got a subset of features. GA gives the strict number of variables assigned by its parameters, but ENet produces unpredictable and usually greater number of nonzero coefficients that can be varied approximately by changing its regularization strength and than can be reduced to desired number by BE algorithm. In order to examine our results we want to have for example 14 fits starting from 15 features in the subset with number of predictors decreasing from 15 to 2. 
+The repeating procedure schematically looks like following:
+\newcounter{numberedCntH}
+\begin{enumerate}
+\item Improve the fit keeping the number of predictors (A*)
+\item Save best possible fit for future analysis
+\item Remove worst feature from feature set defined by fitness function: worst feature is the one that gives smallest change in score after removing (BE)
+\item Check if number of predictors is greater than 2, otherwise stop
+\setcounter{numberedCntH}{\theenumi}
+\end{enumerate}
+After described loop, we have n sets of linear or exponential predictors with decreasing number from n to 2. As a result, we can observe how the goodness of the fit depends on the number of predictors.
 
 \begin{table}[h]
 \centering
 \caption{Correlation matrix example for 5 variables}\label{Correlation_matrix}
 \begin{tabular}{|l|l|l|l|l|l|}
 \hline
-� & X1 & X2 & X3 & X4 & X5 \\
+  & X1 & X2 & X3 & X4 & X5 \\
 \hline
 X1 & 1.00 & 0.95 & 0.90 & 0.30 & 0.20 \\
 \hline
@@ -668,55 +676,5 @@ large when significant multicollinearity issues exist. Multicollinearity
 can lead to less reliable probability values and larger confidence 
 intervals.
 
-
-\red{Best first search tree algorithm with different parameters for convergence;
-Stochastic hill climbing algorithm with random restart;
-Genetic algorithm: two types of selection for crossover, using Pearson  correlation coefficients for mutation;
-
-}
-\textbf{Best fit algorithm.} Schematically the algorithm looks like 
-following pseudocode:
-
-\textit{while found:}
-
-\textit{found = False}
-
-\textit{for feature in features:}
-
-\ \ \ \ \textit{for alternate in feature.alternates:}
-
-\ \ \ \ \ \ \ \ \textit{Replace\_temporarely(alternate, features)}
-
-\ \ \ \ \ \ \ \ \textit{new\_score = Score(features)}
-
-\ \ \ \ \ \ \ \ \textit{if new\_score $<$ best\_score:}
-
-\ \ \ \ \ \ \ \ \ \ \ \ \textit{found = True}
-
-\ \ \ \ \ \ \ \ \ \ \ \ \textit{Replace\_permanently(alternate, 
-features)}
-
-\ \ \ \ \ \ \ \ \ \ \ \ \textit{best\_score = new\_score}
-
-\ \ \ \ \ \ \ \ \ \ \ \ \textit{continue}
-
-where: 
-
-feature.alternates - a list of alternating (most correlated) features 
-created previously in correlation analysis part
-
-Replace\_temporarely - temporarily replacement of current feature by its 
-alternative from the list
-
-Replace\_permanently - permanent replacement of current feature by its 
-alternative. It also means that the list feature.alternates is been 
-replaced too by appropriate one from correlation analysis
-
-Score - some fitness function that evaluates the goodness of the fit. 
-For linear model we used OLS and for exponential fit we used 
-scipy.optimize.least\_squares.
-
-
-\fi % maintext - SI switch
 
 \end{document}
