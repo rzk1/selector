@@ -41,43 +41,52 @@ Machine learns the physics of intermolecular interactions
 \ifdefined\MAINTEXT
 
 \begin{abstract}
-\red Abstract is to be written once we finish the main text. Many journals have a 150-word limit on abstract. 
-IMO, best abstracts contain no more than 5 sentences. \old
+Machine learning algorithms are now widely applied to reconstruct potential energy surfaces (PES) using accurate quantum mechanical energies as training data. Artificial neural networks (ANN) and Gaussian-process regressors (GPR) excel at this task because of their highly flexible representation of PES and complete neglect of the underlying physics of interaction between atoms. This design makes ANN and GPR universal approximators. Unlike fixed-form force fields they can adapt and accurately mimic many PES regardless of the complexity of physical interactions. However, the high adaptability comes at a price of poor extrapolation ability and transferability. ANN and GPR require large training datasets and fail to describe the regions of PES where training data is sparse. Here, we developed another versatile PES-modeling machine learning method with an improved extrapolation ability by accounting for the physics of interactions while still keeping the PES model flexible. The learning algorithm presented in this work utilizes the evolutionary symbolic regression in the space of physically relevant functions. Unlike many existing methods, it adjusts both the explicit analytical representation of the PES model and its parameters to yield a physically appropriate and yet simple equation for the energy. When applied to interactions between molecules in gas-phase clusters, machine finds that the best two-body representation of many quantum mechanical PES is a combination of the Coulomb and Lennard-Jones-like terms---in agreement with human-derived force fields (e.g. TIP3P for water molecules). Furthermore, the automatic incorporation of many-body effects enables machine to suggest corrections to force fields. For example, the algorithm presented here derived simple analytical expressions that capture cooperativity effects in water clusters.
 \end{abstract}
 
 \maketitle
 
 
+
 \section{Introduction}
 
+Machine learning algorithms are now widely applied to reconstruct potential energy surfaces (PES) using accurate quantum mechanical energies as training data. Artificial neural networks (ANN) and Gaussian-process regressors (GPR) excel at this task because of their highly flexible representation of PES and complete neglect of the underlying physics of interaction between atoms. This design makes ANN and GPR universal approximators. Unlike fixed-form force fields they can adapt and accurately mimic many PES regardless of the complexity of physical interactions. However, the high adaptability comes at a price of poor extrapolation ability and transferability. ANN and GPR require large training datasets and fail to describe the regions of PES where training data is sparse. Here, we developed another versatile PES-modeling machine learning method with an improved extrapolation ability by accounting for the physics of interactions while still keeping the PES model flexible. The learning algorithm presented in this work utilizes the evolutionary symbolic regression in the space of physically relevant functions. Unlike many existing methods, it adjusts both the explicit analytical representation of the PES model and its parameters to yield a physically appropriate and yet simple equation for the energy. When applied to interactions between molecules in gas-phase clusters, machine finds that the best two-body representation of many quantum mechanical PES is a combination of the Coulomb and Lennard-Jones-like terms---in agreement with human-derived force fields (e.g. TIP3P for water molecules). Furthermore, the automatic incorporation of many-body effects enables machine to suggest corrections to force fields. For example, the algorithm presented here derived simple analytical expressions that capture cooperativity effects in water clusters.
+
+
 Machine learning shows enormous promise for modeling of materials and molecules~\cite{ceriotti-science}. 
-One of the many rapidly growing area of its application is the development of interatomic potentials---functions that describe the dependence of the interaction energy between atoms on their positions. 
+One of the many rapidly growing area of its application is the development of interatomic potentials---functions that describe the dependence of the interaction energy between atoms on their positions and represent the key component required for all atomistic simulations. 
 In the last decade, several approaches based on artificial neural networks (ANNs) and Gaussian process regression (GPR) have been 
-developed to approximate interatomic potentials using accurate quantum mechanical data as training data. 
-The main advantage of carefully calibrated machine-learned potentials (MLPs) is that they combine the high accuracy of quantum mechanical description of interaction between atoms with the computational efficiency of simple human-derived analytical potentials. 
+developed to approximate interatomic potentials using accurate quantum mechanical energies as training data. 
+The main advantage of such machine-learned potentials (MLPs) is that they combine high accuracy of quantum mechanical description of interaction between atoms with the computational efficiency of simple analytical potentials. 
 %This rare combination of accuracy and cost has enabled high-quality MLP-based simulations of complex materials on unprecedented time and length scales~\cite{Khaliullin2010,Khaliullin2011,RZK0}. 
-Being the key component for atomistic modeling, MLPs with their rare combination of accuracy and cost have enabled simulations of complex materials on unprecedented time and length scales~\cite{Khaliullin2010,Khaliullin2011,RZK0}. 
+This rare combination of accuracy and cost of MLPs has enabled simulations of complex materials on unprecedented time and length scales~\cite{Khaliullin2010,Khaliullin2011,RZK0}. 
+
+The overall quality of interatomic potentials is determined by three key properties: accuracy, transferability, and computational complexity.
 
 %RZK0: Describe the main principles of local descriptors and similarity measure, so that the introduction below is clear.
 
-The high accuracy of MLPs is the result of a very flexible form of the model energy function, parametric or nonparametric. 
-This flexibility allows the learning algorithm to adjust the model in order to reproduce the known energies at the training points and then \textit{interpolate} between the points thus predicting the energies for new structures. 
-Unfortunately, the accuracy of the existing MLPs comes with poor transferability. Machine-learning algorithms are unable to \textit{extrapolate} the energy function to the atomistic configurations that do not resemble those in the training set.
-The transferability problem arises not only for configuration that lie \emph{outside}---according to some distance measure---the training set but also may appear for configurations \emph{inbetween} training points. 
+The high accuracy of MLPs is a result of a very flexible form of the model energy function, parametric or nonparametric. 
+This flexibility allows the learning algorithm to adjust (hyper)parameters in the model in order to reproduce the known energies for atomic configurations in the training set and then \textit{interpolate} between them thus predicting the energies for similar atomic structures. 
+Unfortunately, machine-learning algorithms are unable to \textit{extrapolate} the energy function to configurations that do not resemble those in the training set. 
+%the accuracy of the existing MLPs comes with poor transferability.
+This problem of poor transferability arises not only for configuration that lie \emph{outside}---according to some distance measure---the training set but also may appear for configurations \emph{inbetween} training points. 
+%RZK: it is better to cite problematic case that to give hypothetical examples. Keep the conclusion that large datasets are required. Emphasize that the growth is factorial with the number of atom types.
 A typical example of the former case is an MLP trained to reproduce the energies for a material in a certain pressure interval that fails dramatically for any pressure outside this range. 
 The latter situation occurs when the training set is too sparse for accurate interpolation. For example, an MLP trained on configurations collected from liquid phases might not be able to predict energies of its crystal phases even though the local structures in liquid resembles those in solid state. 
 In order to cope with the sparsity problem, training sets must include accurate quantum mechanical energies for a large number of representative atomistic configurations.%, making the training process computationally unfeasible.
 
-While the accuracy-transferability problem plagues many human-derived energy models it is particularly severe in the case of MLPs. 
-For MLPs, the transferability issues summarized above stem from the complete neglect of the physics of interaction between atoms. 
-For example, ANNs rely on unphysical sigmoid functions, whereas GPR can be viewed as a nonparametric energy representation in a set of unphysical Gaussian functions. 
-Thus MLPs are designed as very flexible universal approximators that just \emph{mimic} the functional shape of complex interatomic potentials. 
+The transferability issues of MLPs stem from the complete neglect of the physics of interaction between atoms. 
+Designed to be flexible universal approximators in mathematical sense, MLPs represent the energy as an elaborate function of a large number of basis functions that do not have physical significance. Typically, sigmoid and Gaussian basis functions are used in ANN and GPR learning, respectively. 
+%For example, ANNs rely on sigmoid basis functions, whereas GPR is a nonparametric expansion in a basis set of Gaussian functions.
 
-The severity of the transferability problem has inspired numerous attempts to put the physical components back into MLPs. 
-The resulting hybrid approach uses fixed human-derived analytical potentials, in which parameters are now obtained with machine-learning algorithms. 
-While such a scheme can extend the transferability and range of applications of a potential, its fixed analytical form reduces the accuracy of predictions.
+The severity of the transferability problem has inspired numerous attempts to reintroduce the physical components into MLPs. 
+Hybrid approaches use physically appropriate analytical potentials, in which parameters are obtained with machine-learning algorithms~\cite{Ghasemi2015}. 
+While such schemes improve the transferability of a potential the fixed analytical form reduces the accuracy of predictions.
 
-In this work, we propose a different approach to learning interatomic potentials that aims at improving their transferability without compromising the flexibility and accuracy. 
+%While the accuracy-transferability problem plagues many human-derived energy models it is particularly severe in the case of MLPs. 
+
+In this work, we propose a different approach to learning interatomic potentials with the aim to improve their transferability without compromising the flexibility and accuracy. 
+The key idea is to use machine learning not only to adjust parameters within a fixed but also to derive a physically appropriate analytical form of the potential.
 %The key idea of the methodology presented here is to let the algorithm select, out of a multitude of physically appropriate functions, only those few that reproduce the training data best. 
 The key idea of the methodology described here is to represent the energy model by a multitude of physically appropriate trial functions and then let the learning algorithm select only those few that reproduce the training data best. 
 A large number of the trial energy functions ensures the accuracy of the model. 
@@ -85,6 +94,10 @@ The physics built into the model and the tight control of overfitting improve it
 Furthermore, the Occam's razor principle applied to the learning process produces simple analytical energy expressions that resemble those describing fundamental physical laws. 
 The obtained physically motivated analytical equations can properly describe interactions between atoms outside the training set. 
 To demonstrate a feasibility of the outlined approach, we considered only intermolecular interactions, for which physically relevant energy models can be constructed with linear functions.
+
+Connections to symbolic regression and feature selection algorithms.
+
+Symbolic regression (10) is an established method based on evolutionary computation (11) for searching the space of mathematical expressions while minimizing various error metrics [see section S4 in the supporting online material (SOM)]. Unlike traditional linear and nonlinear regression methods that fit parameters to an equation of a given form, symbolic regression searches both the parameters and the form of equations simultaneously (see SOM section S6). Initial expressions are formed by randomly combining mathematical building blocks such as algebraic operators {+, –, ÷, ×}, analytical functions (for example, sine and cosine), constants, and state variables. New equations are formed by recombining previous equations and probabilistically varying their subexpressions. The algorithm retains equations that model the experimental data better than others and abandons unpromising solutions. After equations reach a desired level of accuracy, the algorithm terminates, returning a set of equations that are most likely to correspond to the intrinsic mechanisms underlying the observed system.
 
 \section{Methodology}
 
@@ -607,6 +620,13 @@ average distance between the centers of masses of two water molecules.
 \caption{RMSE vs. \% of usage of training points. System B2 with 12 predictors and Gaussian process. Trained and test regions [2.8..5.6] angstrom}
 \label{Fig:B2_fractions}
 \end{figure}
+
+
+\subsection{Water dimer dissociation curve: TIP3P, DFT, EvE}
+
+EVolutionary (Analytical) Expression - EV(A)E
+
+\subsection{Trimer cooperativity: plus-minus map}
 
 \section{Conclusions}
 
