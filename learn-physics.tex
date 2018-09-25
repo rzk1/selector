@@ -101,6 +101,8 @@ Symbolic regression (10) is an established method based on evolutionary computat
 
 \section{Methodology}
 
+\subsection{Energy model and terminology}
+
 %\red Short description of the general methodology with only basic equations and motivation behind them. All examples related to a specific model (e.g. water) will be presented in Results and Discussion. Description of the code (not be confused with algorithm) should be moved to the Supplementary Information. All results should be presented in Results and Discussion, unless they are necessary to understand our methodology. \old
 
 This expression also satisfies another important physical constraints: it makes energy invariant to translations and rotations of the entire molecular system. 
@@ -131,7 +133,7 @@ The multipole expansion of intermolecular energies implies that POIDs can adequa
 The flexibility of the model \red is very high\old as it includes many-body beyond simple pairwise interactions through products 
 of POIDs.
 
-\textbf{Systems and training set.} 
+\subsection{Molecular systems and training sets} 
 
 %Lennard-Jones model.
 
@@ -180,21 +182,20 @@ molecules, the full model should be used since the simplified one cannot
 give accurate fit. 
 
 
-\textbf{Training procedure.} In this model, POIDs and their products serve as \textit{features}. 
-To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters (i.e. linear coefficients in our case) to produce the best fit. 
-The training procedure includes two stages: feature selection and fine-tuning. 
-\red The second part is the improvement of the subset performed using correlation analysis (CA) and searching for alternate features. \old
+\subsection{Training procedure} 
 
-$[$OLS$]$. Main equation. Why is OLS bad algorithm for fitting?
+As described above, POIDs and their products serve as \textit{features} (ZZZ - define equivalent and non-equivalent features). 
+To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters --- linear coefficients in our case --- to produce the best fit. 
+The training procedure includes two stages: feature selection and fine-tuning. (ZZZ - better names?)
 
-We explored the applicability of two methods to perform feature 
-selection: elastic net regularization (EN) and genetic algorithm (GA). 
-While both algorithms produce almost identical results the advantage of 
-$[$the?$]$ genetic algorithm is that it can be easily generalized to 
-features with nonlinear fitting coefficients (e.g. exponentially 
-decaying functions can be included in the feature list later).
+\textbf{Feature selection}
 
-\textit{Elastic net}. Basic idea and main equation
+Main equation. Why is OLS bad algorithm for fitting?
+
+We explored the applicability of two methods to perform feature selection: elastic net regularization (EN) and genetic algorithm (GA). 
+While both algorithms produce almost identical results the advantage of GA is that it can be easily generalized to features with nonlinear fitting coefficients (e.g. exponentially decaying functions can be included in the feature list later).
+
+\textit{Elastic net}. Basic idea and main equation. ZZZ- Do we really need to have EN in the main text?
 
 As it was mentioned if there is a group of highly correlated variables, 
 then the LASSO selects just one variable from a group and drop the 
@@ -208,12 +209,9 @@ number of features from thousands to hundreds or even less. Next step is
 to reduce the number of features decreased by EN to desired value. It 
 can be done by the backwards elimination algorithm (BE), which removes 
 the feature Basically, BE removes the worst (less significant feature), 
-one at a time, based on criterion provided by fitness function \textit{
-F} until the desired number of features is reached:
+one at a time, based on criterion provided by fitness function until the desired number of features is reached:
 
-\textit{F = }
-
- Since after the reduction of number of features by EN the number of 
+Since after the reduction of number of features by EN the number of 
 observations is much greater than number of variables, so we can use 
 ordinary least squares (OLS) as a fitness function and the criterion 
 would be minimum squared error (MSE). BE can be used for linear and 
@@ -239,55 +237,30 @@ randomly selected feature with alternate feature from correlation list.
 The procedure of obtaining lists of alternate features will described in 
 the next two sections.
 
-\textit{Fine-tuning ZZZ.} The second stage of the training processes 
-is designed to deal with strong multicollinearity between features. 
-Since our goal is to reduce the number of POIDs in the fitting function, 
-most common methods of dealing with linear dependent features such as 
-principal component analysis are not applicable. We designed a procedure 
-for eliminating/adding/replacing collinear features with two goals: 
-compact and accurate. 
+\textbf{Fine-tuning.} The second stage of the training processes is designed to deal with strong multicollinearity between features, hopefully improving the set previously selected by either EN or GA. 
+It is worth noting that commonly-employed methods for resolving linear dependence issues (e.g. principal component analysis) are not applicable in our case because our main goal is to keep our features pure (i.e. uncontaminated by the admixture of other closely related nearly-dependent features). 
+Therefore, we designed a procedure that replaces, adds, and eliminates collinear features while keeping the model function both compact and accurate. [VLAD: does the fine-tuning algorithm add features?]
 
-focused on eliminating collinear variables in such a way that final fit 
-will contain only one feature for each collinear group. It is not the 
-ideal representation but it allows us having good enough fit minimize 
-number of variables that would give a compact energy equation. To find 
-out how a linear correlation between all our features we calculated 
-the correlation matrix (i.e. matrix of Pearson correlation coefficients). Next step is to 
-create a list of dependent features for each variable using threshold 
-MinCorrelation between 0 and 1 for cut off. If correlation between two 
-features is greater than MinCorrelation they are considered to be 
-linearly dependent. Suppose we have only 5 features and our correlation 
-matrix looks like in Fig. 1. If we set MinCorrelation = 0.8 than 
-Variable X1 will have a list of dependent variables $[$X2, X3$]$, X2 
-will have $[$X1, X3$]$, X3=$>$ $[$X1, X2$]$, X4 and will have empty 
-lists that means they are linearly independent within chosen tolerance. 
-The closer MinCorrelation to zero - the greater list of dependent 
-variables. 
+Fine-tuning starts with with the calculation of the correlation matrix (i.e. matrix of Pearson correlation coefficients) for all features, including those not selected in the first stage. 
+Next, each feature is assigned a list of strongly-correlated features. Two features are considered strongly correlated if their correlation coefficient is greater than a pre-selected threshold value of approximately 0.8 [VLAD: what are typical MinCorrelation values?].
+Finally, each feature is replaced ... 
+Its goal is keeping the number of predictors find the best subset of features that gives lowest MSE. 
+BF uses list of dependent variables described above and tries to choose alternate features that are related to the original ones but gives better fit judged by lower RMSE values. 
+Algorithm stops if for any feature from the selected subset no better alternatives was found. 
 
-Its goal is keeping the number of predictors find the best subset of 
-features that gives lowest MSE. BF uses list of dependent variables 
-described above and tries to choose alternate features that are related 
-to the original ones but gives better fit. Algorithm description. 
-Algorithm stops if for any feature from the selected subset no better 
-alternatives was found. Since the subset contains only 20 or less 
-features in our case the algorithm works relatively fast. Its speed 
-depends on MinCorrelation variable that influence the formation of 
-alternate features lists. The closer this variable to 0 the greater 
-lists and the lower performance. 
+Comments on performance: Since the subset contains only 20 or less features in our case the algorithm works relatively fast. Its speed depends on MinCorrelation variable that influence the formation of alternate features lists. The closer this variable to 0 the greater lists and the lower performance. 
 
-\textbf{Final stage. }At this stage, we have few features that were 
-previously selected by either EN or GA. In case of GA this number can be 
-strict since it is equal to chromosome size assigned in GA. For EN this 
-number can be equal to desired value only approximately by varying 
-regularization strength of L1 portions of EN. Let's say we have 20 
-preselected features from GA. The first goal of final fit is to improve 
-MSE by replacing selected features which can have linearly dependent 
-alternatives and are not selected. Second goal if this procedure is to 
-have 20 sets of different features with number of predictors decreasing 
-from 20 to 1 in order to see how the goodness of the fit is getting 
-worth with decreasing number of predictors which can give a possibility 
-to analyze the remaining features and to try to give them physical 
-interpretation. The loop has few steps:
+Comments on accuracy: focused on eliminating collinear variables in such a way that final fit will contain only one feature for each collinear group. It is not the ideal representation but it allows us having good enough fit minimize number of variables that would give a compact energy equation. 
+
+%%% FAST post-GA feature reduction
+In addition to dealing with multicollinearity issues, we designed a fast feature elimination procedure for models produced by the GA algorithm. 
+In case of GA this number can be strict since it is equal to chromosome size assigned in GA. 
+For EN this number can be equal to desired value only approximately by varying regularization strength of L1 portions of EN. 
+Let's say we have 20 preselected features from GA. 
+The first goal of final fit is to improve MSE by replacing selected features which can have linearly dependent alternatives and are not selected. 
+Second goal if this procedure is to have 20 sets of different features with number of predictors decreasing from 20 to 1 in order to see how the goodness of the fit is getting worth with decreasing number of predictors which can give a possibility to analyze the remaining features and to try to give them physical interpretation. 
+
+The loop has few steps:
 
 \newcounter{numberedCntH}
 \begin{enumerate}
@@ -299,9 +272,8 @@ removing (BE)
 \item Check if number of predictors is greater than 2, otherwise stop
 \setcounter{numberedCntH}{\theenumi}
 \end{enumerate}
-At the end of final stage, we have n sets of linear or exponential 
-predictors with decreasing number from n to 2. As a result, we can see 
-how the goodness of the fit depends on the number of predictors.
+
+At the end of final stage, we have $N-1$ sets of linear predictors with decreasing number of features from $N$ to 2, thus enabling us to see how the quality of the fit depends on the number of predictors.
 
 
 \section{Results and discussion}
@@ -357,21 +329,27 @@ EN works faster than GA but gives worst results.
 
 \subsection{System A: TIP3P water dimer}
 
-We would like to show that our algorithm recovers the correct analytic equation from sparse data. In order to test it and to see how well it would find a simple expression, first of all, we used equation~(\ref{eq:tip3p}) to generate data in the interval where the distance between centers of masses of two water molecules varies from 2 to 8 angstrom. We used range of powers from -1 to -15 for features with single distances and the same range for features that contain product of distances. Since all intramolecular distances are just constants they were removed from the set. Also, for simulation we took only a random numbers of coordinates that equally represent each small bin in chosen interval. The bin size was 0.2 angstrom. Initial number of features was 135 + 1008 = 1143. After performing dimensionality reduction genetic algorithm started with 45 + 245 = 290 features and 69 training points per bin with total number of training records equal to  2139. Initial chromosome size was 20 and number of individuals in population was equal to 100. At the and of code execution the exact linear fit with 5 variables and original coefficients were recovered.
-
-Please see Eq.~(\ref{eq:tip3p})
-
+First of all, we show that our algorithm recovers a known analytical equation correctly using sparse numerical data. We chose the  TIP3P potential (Eq.~\ref{eq:tip3p}) developed to simulate liquid water as the reference equation to be recovered. 
+%
 \begin{eqnarray} \label{eq:tip3p}
-&E(R_i) = \frac{c_0}{R_{O_1O_2}^{12}}-\frac{c_1}{R_{O_1O_2}^6} + \frac{c_2}{R_{O_1O_2}} - \nonumber
-\\
-& - c_3(\frac{1}{R_{O_1H_{21}}}+\frac{1}{R_{O_1H_{22}}}+\frac{1}{R_{O_2H_{11}}}+\frac{1}{R_{O_2H_{12}}}) + \nonumber
-\\
-& + c_4(\frac{1}{R_{H_{11}H_{21}}}+\frac{1}{R_{H_{11}H_{22}}}+\frac{1}{R_{H_{12}H_{21}}}+\frac{1}{R_{H_{12}H_{22}}})
+E(R_i) & = & \frac{c_0}{R_{O_1O_2}^{12}}-\frac{c_1}{R_{O_1O_2}^6} + \frac{c_2}{R_{O_1O_2}} - \nonumber \\
+& - & c_3(\frac{1}{R_{O_1H_{21}}}+\frac{1}{R_{O_1H_{22}}}+\frac{1}{R_{O_2H_{11}}}+\frac{1}{R_{O_2H_{12}}}) + \nonumber\\
+& + & c_4(\frac{1}{R_{H_{11}H_{21}}}+\frac{1}{R_{H_{11}H_{22}}}+\frac{1}{R_{H_{12}H_{21}}}+\frac{1}{R_{H_{12}H_{22}}})
 \end{eqnarray}
+%
+where $c_1=ZZZ$~a.u., ZZZ.
+
+In order to test it and to see how well it would find a simple expression, first of all, we used equation~(\ref{eq:tip3p}) to generate data in the interval where the distance between centers of masses of two water molecules varies from 2 to 8 angstrom. We used range of powers from -1 to -15 for features with single distances and the same range for features that contain product of distances. Since all intramolecular distances are just constants they were removed from the set. Also, for simulation we took only a random numbers of coordinates that equally represent each small bin in chosen interval. The bin size was 0.2 angstrom. Initial number of features was 135 + 1008 = 1143. After performing dimensionality reduction genetic algorithm started with 45 + 245 = 290 features and 69 training points per bin with total number of training records equal to  2139. Initial chromosome size was 20 and number of individuals in population was equal to 100. At the and of code execution the exact linear fit with 5 variables and original coefficients were recovered.
+
+ZZZ - Note relation between charges in our procedure.
+
+\subsection{System A2: TIP3P + noise?}
 
 \subsection{System B: water dimer}
 
-In this part, we focus on two water molecules model. First of all, we need to analyze how RMSE of the function obtained from fitting procedure depends on number of predictors. In simplest case (System B1 Table \ref{Tab:systems}) we have only the first term of equation (\ref{eq:tip3p}). Fig. \ref{Fig:B1_RMSE} shows that if we have a fit with more than 6 variables, RMSE decreases very slightly. If we were to examine what machine learned from dataset first of all it would be wise to compare classic model given by equation (\ref{eq:tip3p}) with newly found fit. For 5 predictors, the results are summarized in Table \ref{Tab:B1 coefficients}. Its RMSE=0.0007068 Ha is even better than the one obtained with classic formula which is 0.0007428 Ha. Since algorithm saves all explored states, we discovered that there are many states with similar goodness of the fit. The one described above is just the best result obtained for this particular configuration (training points are in the interval 2.8A to 5.6A).
+%VLAD: all units must be the same throught the manuscript. For energy, use kJ/mol. 1 Hartree = 2625.5 kJ/mol
+
+In this part, we focus on two water molecules model. First of all, we need to analyze how RMSE of the function obtained from fitting procedure depends on number of predictors. In simplest case (System B1 Table \ref{Tab:systems}) we have only the first term of equation (\ref{eq:tip3p}). Fig. \ref{Fig:B1_RMSE} shows that if we have a fit with more than 6 variables, RMSE decreases very slightly. If we were to examine what machine learned from dataset first of all it would be wise to compare classic model given by equation (\ref{eq:tip3p}) with newly found fit. For 5 predictors, the results are summarized in Table \ref{Tab:B1 coefficients}. Its RMSE=0.0007068 Ha is even better than the one obtained with classic formula which is 0.0007428 Ha. Since algorithm saves all explored states, we discovered that there are many states with similar goodness of the fit. [ZZZ-their are physically equivalent] The one described above is just the best result obtained for this particular configuration (training points are in the interval 2.8A to 5.6A).
 
 \begin{figure}
 \includegraphics[width=0.45\textwidth]{media/B1_Single_GA_PATH_RMSE.eps}
@@ -414,8 +392,11 @@ H-H & 7 & 0.04201 \\
 \end{tabular*}
 \end{table}
 
-In order to analyze deeper system B, we extended our previous model to two terms (System B2 Table  \ref{Tab:systems}) of equation~(\ref{eq:tip3p}). Second term might be useful if there exists dependence between our features generated using first part of equation~(\ref{eq:tip3p}). In this case, the second term will improve the goodness of the fit.
+In order to analyze deeper system B, we extended our previous model to two terms (System B2 Table  \ref{Tab:systems}) of equation~(\ref{eq:tip3p}). 
+%ZZZ - note raltion between charges.
+Second term might be useful if there exists dependence between our features generated using first part of equation~(\ref{eq:tip3p}). In this case, the second term will improve the goodness of the fit.
 
+%VLAD: place figures 1,2,3 into one Figure with 3 panels A, B, C. Place figures 5,6,7 into one figure with 3 panels A, B, C. Combine figures 4 and 8 into one panel.
 % B2
 \begin{figure}
 \includegraphics[width=0.45\textwidth]{media/B2_GA_PATH_RMSE.eps}
