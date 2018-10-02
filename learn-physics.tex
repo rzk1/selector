@@ -195,29 +195,8 @@ Main equation. Why is OLS bad algorithm for fitting?
 We explored the applicability of two methods to perform feature selection: elastic net regularization (EN) and genetic algorithm (GA). 
 While both algorithms produce almost identical results the advantage of GA is that it can be easily generalized to features with nonlinear fitting coefficients (e.g. exponentially decaying functions can be included in the feature list later).
 
-\textit{Elastic net}. Basic idea and main equation. ZZZ- Do we really need to have EN in the main text?
-
-As it was mentioned if there is a group of highly correlated variables, 
-then the LASSO selects just one variable from a group and drop the 
-others. This is not convenient because in our case LASSO can drop 
-important features while keeping less important one. EN can overcome 
-this problem since it contains two penalties: linear and quadratic. By 
-adjusting the two regularization factors, it is possible to force EN to 
-keep dependent features in the model. Later the unnecessary features 
-will be removed by another algorithm. Therefore, EN allows to reduce the 
-number of features from thousands to hundreds or even less. Next step is 
-to reduce the number of features decreased by EN to desired value. It 
-can be done by the backwards elimination algorithm (BE), which removes 
-the feature Basically, BE removes the worst (less significant feature), 
-one at a time, based on criterion provided by fitness function until the desired number of features is reached:
-
-Since after the reduction of number of features by EN the number of 
-observations is much greater than number of variables, so we can use 
-ordinary least squares (OLS) as a fitness function and the criterion 
-would be minimum squared error (MSE). BE can be used for linear and 
-nonlinear features; the only difference is different fitness functions.
-
-\textit{Genetic algorithm.} ZZZ - a brief description of GA in the context of our work is required. Population of chromosomes improved by iterative mutations and crossovers.
+\textit{Genetic algorithm.} In a generic genetic algorithm (GA), a population of candidate solutions to the optimization problem is [improved]/evolved iteratively towards better solutions. Each solution is described by a chromosome --- a collection of genes --- that undergoes mutations and crossovers in the evolution process. In our case, it is the analytical form of the energy equation that represents a chromosome whereas each POID term in the equation represents a gene. It is worth noting that parameters $c$ of the equation are optimized with conventional linear or nonlinear optimization methods, without GA.
+%Population of chromosomes improved by iterative mutations and crossovers.
 
 We used classic genetic algorithm to select best subset of features from the initial set. Since the number of desired selected features is relatively small and for our model does not exceeds 20 features OLS can be used as a fitness function. The goal of GA is to find the best possible combination of features provided by large feature set. GA itself is been used as a search algorithm; at the beginning it converges relatively fast but very slow at the end. The ideal fitness value is equal to 0. After some iterations (its number depends on many parameters and on dataset as well) GA stops improving its best child, therefore it terminates and gives its best result to A* search. GA contains many parameters that can be varied in order to achieve better performance and faster convergence.\\ 
 GA parameters:\\
@@ -243,50 +222,64 @@ Stopping criteria are elapsed time, number of iterations and tolerance.
 
 The main difference from classic GA is that mutation function replaces randomly selected feature with alternate feature from correlation list. 
 
-\textbf{Second stage: fine-tuning.} The second stage of the training processes is designed to deal with strong multicollinearity between features and improve the set of features previously selected by either EN or GA. 
+VLAD: How do we seed the population?
+
+\textit{Elastic net}. Basic idea and main equation. ZZZ- Do we really need to have EN in the main text?
+
+As it was mentioned if there is a group of highly correlated variables, 
+then the LASSO selects just one variable from a group and drop the 
+others. This is not convenient because in our case LASSO can drop 
+important features while keeping less important one. EN can overcome 
+this problem since it contains two penalties: linear and quadratic. By 
+adjusting the two regularization factors, it is possible to force EN to 
+keep dependent features in the model. Later the unnecessary features 
+will be removed by another algorithm. Therefore, EN allows to reduce the 
+number of features from thousands to hundreds or even less. Next step is 
+to reduce the number of features decreased by EN to desired value. It 
+can be done by the backwards elimination algorithm (BE), which removes 
+the feature Basically, BE removes the worst (less significant feature), 
+one at a time, based on criterion provided by fitness function until the desired number of features is reached:
+
+Since after the reduction of number of features by EN the number of 
+observations is much greater than number of variables, so we can use 
+ordinary least squares (OLS) as a fitness function and the criterion 
+would be minimum squared error (MSE). BE can be used for linear and 
+nonlinear features; the only difference is different fitness functions.
+
+\textbf{Second stage: fine-tuning using depth-first search algorithm.} The second stage of the training processes is designed to deal with strong correlation (e.g. multicollinearity) between features and improve the functional form of the energy equation previously derived by either EN or GA. 
 It is worth noting that commonly-employed methods for resolving linear dependence issues (e.g. principal component analysis) are not applicable in our case because our main goal is to keep our features pure (i.e. uncontaminated by the admixture of other closely related nearly-dependent features). 
-Therefore, we designed a procedure that replaces and eliminates collinear features while keeping the model function both compact and accurate. 
+Therefore, we designed a fine-tuning procedure that attempts to lower the RMSE of the model by swapping strongly-correlated features. 
+%RZK: Is RMSE defined by this point
 
-Fine-tuning starts with with the calculation of the correlation matrix (i.e. matrix of Pearson correlation coefficients) for all features, including those not selected in the first stage. 
-Next, each feature is assigned a list of strongly-correlated features. Two features are considered strongly-correlated if their correlation coefficient is greater than a pre-selected threshold value.
-Finally, each feature is replaced...
-
-\red
-
-Its goal is keeping the number of predictors find the best subset of features that gives lowest MSE. 
-BF uses list of dependent variables described above and tries to choose alternate features that are related to the original ones but gives better fit judged by lower RMSE values. 
-Algorithm stops if for any feature from the selected subset no better alternatives was found. 
-
-Comments on performance: Since the subset contains only 20 or less features in our case the algorithm works relatively fast. Its speed depends on MinCorrelation variable that influence the formation of alternate features lists. The closer this variable to 0 the greater lists and the lower performance. 
-
-Comments on accuracy: focused on eliminating collinear variables in such a way that final fit will contain only one feature for each collinear group. It is not the ideal representation but it allows us having good enough fit minimize number of variables that would give a compact energy equation. 
-
-\blue
-
-\textit{A* (depth first search tree) algorithm}. Its goal is keeping the number of predictors find better subset of features that have better fitness then initial provided by either elastic net or genetic algorithm. A* uses list of dependent variables described above and tries to choose alternate features that are related to the original ones but gives better fit. A* is greedy depth first search tree algorithm with heuristic function that speeds up computation by decreasing the number of nodes to be evaluated. General form of its fitness function if f(n) = g(n) + h(n) where g(n) is path cost function that in our case represent the level of node n in search tree and h(n) - heuristic function which is "shortest path" to the goal. Since our goal is fitness = 0, then we can use MSE as a parameter for h(n). 
-
-A* search uses this highly-correlated list in trials to create successors. When MinCorrelation approaches to 0 the number of children nodes increases, therefore increases the probability of improving the fitness.
+The fine-tuning starts with the calculation of the correlation matrix (i.e. matrix of Pearson correlation coefficients) for all features, including those not selected in the first stage. 
+The correlation coefficients are then used to assign a list of strongly-correlated equivalents to each feature. Two features are considered strongly-correlated if their correlation coefficient is greater than a pre-selected threshold value. 
+Finally, the features are systematically replaced with their highly-correlated equivalents following the algorithm [called greedy-ZZZ and] presented below. 
 
 \begin{figure}
 \includegraphics[width=0.45\textwidth]{media/water_distances_3.eps}
 \caption{A* search tree}\label{Fig:A_star_tree}
 \end{figure}
 
-In example shown on Fig.\ref{Fig:A_star_tree} the root is the node that contain chromosome received from either GA or ENet + BE. A* tries to produce children nodes according to its selection criterion (details later) and put them in the sorted queue using binary search. Each new node that goes inside the queue finds its place according to fitness function - lowest first, therefore queue is always sorted. Extraction from queue works exactly as for stack: using pop(). At each iteration A* pops the best child from queue and tries to create its children according to selection criterion and according to correlation coefficients list. Each successfully created child node goes into queue. Algorithm remembers the best node and stops when queue is empty or its working time without improving best node exceeds some value assigned as its parameter.\\
-\textit{A* selection criteria.} There are few predefined stopping criteria for algorithm:
-Fast: each newly created node compares with best node and goes into queue only if it has better fitness. Algorithm works as one branch of depth first search in this case.
-Parent: if newly created node is better than its parent it goes to queue.
-Level: if the fitness of newly created node is the best that exist on its level (see \ref{Fig:A_star_tree}) it goes into queue. At the same time when node pop() from queue its fitness compares with best for its level since by the time algorithm reached that node level's fitness could be improved already and this node does not agree with selection criteria. This approach gives good balance between computation speed and accuracy of the fit and has been used for most our computations.
-Slow: all nodes produced go to queue and algorithm becomes breadth first search. It scans through all tree and can find the best solution. However, its time complexity O(n**k) where k - deepest level and n - number of variables makes it unmanageable in most cases. \\
-A* parameters:\\
-'A goal': 1e-18 means tolerance of zero; \\
-'A stop time': 200 in seconds - time of A* working without improving best fit after which algorithm terminates;\\
-'A max queue': 1000 - maximal length of queue of waiting nodes, weakest node after this length drops.\\
+At each iteration, the algorithm creates children nodes by replacing a feature with its highly-correlated equivalents. [VLAD: I thought that only one features is replaced in each level. It is unclear how exactly do you create children nodes.] If a newly created node satisfies the selection criteria listed below it is inserted into the waiting list, which is always kept sorted according to the RMSE of the nodes. It is worth noting that there is only one waiting list for children of all levels. The best node is then extracted from the waiting list and the algorithm proceeds to its next iteration. Algorithm remembers the best node and stops when the waiting list is empty or the maximum number of iterations is reached.
 
-\old
+\textit{Selection criteria. Alternative options that control insertion/extraction of nodes into/from the waiting list.}
+\begin{itemize}
+\item Fast: each newly created node compares with best node and goes into queue only if it has better fitness. Algorithm works as one branch of depth first search in this case.
+\item Parent: if newly created node is better than its parent it goes to queue.
+\item Level: if the fitness of newly created node is the best that exist on its level (see Figure~\ref{Fig:A_star_tree}) it goes into queue. [VLAD: Is it discarded otherwise?] At the same time, when a node is extracted from the waiting list, its fitness compared with the best for its level since by the time algorithm reached that node level's fitness could be improved already and this node does not agree with selection criteria. This approach gives good balance between computation speed and accuracy of the fit and is used in the majority of our calculations.
+\item Slow: all nodes produced go to queue and algorithm becomes [greedy?/sorted?] breadth-first search [not really]. It scans through all tree and can find the best possible solution. However, its complexity --- $\mathcal{O}(n^k)$ where $k$ is the number of selected features and $n$ is the average number of highly-correlated features per selected feature --- makes it unmanageable in most cases.
+\end{itemize}
+
+Stopping criteria: Max queue length is 1000 - maximal length of queue of waiting nodes, weakest node after this length drops. Algorithm stops if for any feature from the selected subset no better alternatives was found. 
+
+%A* is greedy depth first search tree algorithm with heuristic function that speeds up computation by decreasing the number of nodes to be evaluated. %General form of its fitness function if f(n) = g(n) + h(n) where g(n) is path cost function that in our case represent the level of node n in search tree and h(n) - heuristic function which is "shortest path" to the goal. Since our goal is fitness = 0, then we can use MSE as a parameter for h(n). 
+
+Comments on performance and accuracy: Since the subset contains only 20 or less features in our case the algorithm works relatively fast. Its speed depends on MinCorrelation variable that influence the formation of alternate features lists. The closer this variable to 0 the greater lists and the lower performance. %When MinCorrelation approaches to 0 the number of children nodes increases, therefore increases the probability of improving the fitness.
+
+Comments on accuracy: focused on eliminating collinear variables in such a way that final fit will contain only one feature for each collinear group. It is not the ideal representation but it allows us having good enough fit minimize number of variables that would give a compact energy equation. 
 
 %%% FAST post-GA feature reduction
-\textbf{Optional backward(s) feature elimination.} 
+\textbf{Optional backward feature elimination.} 
 The final number of selected features can be adjusted from the start in the GA method by changing the size of a chromosome. 
 While the final number of retained features in the EN algorithm is not known \emph{a priori} it can also be adjusted by restarting the method with different regularization strength. 
 However, in both cases, it is useful to estimate quickly how the quality of the fit depends on the number of predictors without repeating the entire training process. 
