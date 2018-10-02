@@ -188,7 +188,7 @@ As described above, POIDs and their products serve as \textit{features} (ZZZ - d
 To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters --- linear coefficients in our case --- to produce the best fit. 
 The training procedure includes two stages: feature selection and fine-tuning. (ZZZ - better names?)
 
-\textbf{Feature selection}
+\textbf{First stage: feature selection}
 
 Main equation. Why is OLS bad algorithm for fitting?
 
@@ -243,12 +243,12 @@ Stopping criteria are elapsed time, number of iterations and tolerance.
 
 The main difference from classic GA is that mutation function replaces randomly selected feature with alternate feature from correlation list. 
 
-\textbf{Fine-tuning.} The second stage of the training processes is designed to deal with strong multicollinearity between features, hopefully improving the set previously selected by either EN or GA. 
+\textbf{Second stage: fine-tuning.} The second stage of the training processes is designed to deal with strong multicollinearity between features and improve the set of features previously selected by either EN or GA. 
 It is worth noting that commonly-employed methods for resolving linear dependence issues (e.g. principal component analysis) are not applicable in our case because our main goal is to keep our features pure (i.e. uncontaminated by the admixture of other closely related nearly-dependent features). 
 Therefore, we designed a procedure that replaces and eliminates collinear features while keeping the model function both compact and accurate. 
 
 Fine-tuning starts with with the calculation of the correlation matrix (i.e. matrix of Pearson correlation coefficients) for all features, including those not selected in the first stage. 
-Next, each feature is assigned a list of strongly-correlated features. Two features are considered strongly correlated if their correlation coefficient is greater than a pre-selected threshold value of approximately ZZZ [VLAD: what are typical MinCorrelation values? can be close to zero actually, meaning that all features are included].
+Next, each feature is assigned a list of strongly-correlated features. Two features are considered strongly-correlated if their correlation coefficient is greater than a pre-selected threshold value.
 Finally, each feature is replaced...
 
 \red
@@ -285,36 +285,12 @@ A* parameters:\\
 
 \old
 
-\red
-
 %%% FAST post-GA feature reduction
-In addition to dealing with multicollinearity issues, we designed a fast feature elimination procedure for models produced by the GA algorithm. 
-In case of GA this number can be strict since it is equal to chromosome size assigned in GA. 
-For EN this number can be equal to desired value only approximately by varying regularization strength of L1 portions of EN. 
-Let's say we have 20 preselected features from GA. 
-The first goal of final fit is to improve MSE by replacing selected features which can have linearly dependent alternatives and are not selected. 
-Second goal if this procedure is to have 20 sets of different features with number of predictors decreasing from 20 to 1 in order to see how the goodness of the fit is getting worth with decreasing number of predictors which can give a possibility to analyze the remaining features and to try to give them physical interpretation. 
-
-The loop has few steps:
-
-\blue
-
-\textit{Backward elimination} examines each feature in subset and drops the worst one according to fitness function results. Each call removes one worst feature.
-
-\textit{After GA or ENet.} we have got a subset of features. GA gives the strict number of variables assigned by its parameters, but ENet produces unpredictable and usually greater number of nonzero coefficients that can be varied approximately by changing its regularization strength and than can be reduced to desired number by BE algorithm. In order to examine our results we want to have for example 14 fits starting from 15 features in the subset with number of predictors decreasing from 15 to 2. 
-The repeating procedure schematically looks like following:
-\newcounter{numberedCntH}
-\begin{enumerate}
-\item Improve the fit keeping the number of predictors (A*)
-\item Save best possible fit for future analysis
-\item Remove worst feature from feature set defined by fitness function: worst feature is the one that gives smallest change in score after removing (BE)
-\item Check if number of predictors is greater than 2, otherwise stop
-\setcounter{numberedCntH}{\theenumi}
-\end{enumerate}
-
-\old
-
-At the end of final stage, we have $N-1$ sets of linear predictors with decreasing number of features from $N$ to 2, thus enabling us to see how the quality of the fit depends on the number of predictors.
+\textbf{Optional backward(s) feature elimination.} 
+The final number of selected features can be adjusted from the start in the GA method by changing the size of a chromosome. 
+While the final number of retained features in the EN algorithm is not known \emph{a priori} it can also be adjusted by restarting the method with different regularization strength. 
+However, in both cases, it is useful to estimate quickly how the quality of the fit depends on the number of predictors without repeating the entire training process. 
+Therefore, we implemented a fast feature elimination procedure that starts with an existing feature set, defines the worst feature as the one giving the smallest increase in fitness, then drops the worst feature from the set, and performs the final fine tuning based on the ZZZ algorithm.  The elimination procedure is repeated until only one feature is left in the set.
 
 %\begin{table}[h]
 %\centering
