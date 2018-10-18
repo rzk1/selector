@@ -1,6 +1,6 @@
-learn-physics.aux
-learn-physics.dvi
-learn-physics.log
-learn-physics.ps
-learn-physics.pdf
-learn-physicsNotes.bib
+*.aux
+*.dvi
+*.log
+*.ps
+*.pdf
+*Notes.bib

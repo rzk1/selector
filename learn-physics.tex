@@ -1,34 +1,19 @@
-\documentclass[aps,prl,reprint,amsmath,amssymb,nature]{revtex4-1}
-
-% define variable that compiles the main text (as opposed to SI text)
-\newcommand*{\MAINTEXT}{}
+\documentclass[aip,jcp,reprint,amsmath,amssymb,nature]{revtex4-1}
 
 \usepackage{epsfig,color,graphicx}
+\usepackage{xr}
+\bibliographystyle{naturemag}
 
-\begin{document}
+\externaldocument[SI-]{SI}
+
 \newcommand{\Ang}{\ensuremath{\mathring{\text{A}}}}
 \newcommand{\red}{\color{red}}
 \newcommand{\blue}{\color{blue}}
 \newcommand{\old}{\color{black}}
 
-\bibliographystyle{naturemag}
+\begin{document}
 
-%\ifdefined\MAINTEXT
-%\else
-%	\clearpage
-%	%\widetext
-%	\setcounter{figure}{0}
-%	\setcounter{page}{1}
-%	\renewcommand{\thefigure}{S\arabic{figure}}
-%\fi
-
-\title{
-\ifdefined\MAINTEXT
-\else
-Supplementary Information: \\
-\fi
-Machine learns the physics of intermolecular interactions
-}
+\title{Machine learns the physics of intermolecular interactions}
 
 \author{Volodymyr Sakun}
 \affiliation{Department of Civil Engineering, McGill University, 817 Sherbrooke St. West, Montreal, QC H3A 0C3, Canada}
@@ -36,17 +21,13 @@ Machine learns the physics of intermolecular interactions
 \email{rustam.khaliullin@mcgill.ca}
 \affiliation{Department of Chemistry, McGill University, 801 Sherbrooke St. West, Montreal, QC H3A 0B8, Canada}
 
-\date{\today}
-
-\ifdefined\MAINTEXT
+%\date{\today}
 
 \begin{abstract}
 Machine learning algorithms are now widely applied to reconstruct potential energy surfaces (PES) using accurate quantum mechanical energies as training data. Artificial neural networks (ANN) and Gaussian-process regressors (GPR) excel at this task because of their highly flexible representation of PES and complete neglect of the underlying physics of interaction between atoms. This design makes ANN and GPR universal approximators. Unlike fixed-form force fields they can adapt and accurately mimic many PES regardless of the complexity of physical interactions. However, the high adaptability comes at a price of poor extrapolation ability and transferability. ANN and GPR require large training datasets and fail to describe the regions of PES where training data is sparse. Here, we developed another versatile PES-modeling machine learning method with an improved extrapolation ability by accounting for the physics of interactions while still keeping the PES model flexible. The learning algorithm presented in this work utilizes the evolutionary symbolic regression in the space of physically relevant functions. Unlike many existing methods, it adjusts both the explicit analytical representation of the PES model and its parameters to yield a physically appropriate and yet simple equation for the energy. When applied to interactions between molecules in gas-phase clusters, machine finds that the best two-body representation of many quantum mechanical PES is a combination of the Coulomb and Lennard-Jones-like terms---in agreement with human-derived force fields (e.g. TIP3P for water molecules). Furthermore, the automatic incorporation of many-body effects enables machine to suggest corrections to force fields. For example, the algorithm presented here derived simple analytical expressions that capture cooperativity effects in water clusters.
 \end{abstract}
 
 \maketitle
-
-
 
 \section{Introduction}
 
@@ -133,6 +114,97 @@ The multipole expansion of intermolecular energies implies that POIDs can adequa
 The flexibility of the model \red is very high\old as it includes many-body beyond simple pairwise interactions through products 
 of POIDs.
 
+\subsection{Training procedure} 
+
+As described above, POIDs and their products serve as \textit{features} (ZZZ - define equivalent and non-equivalent features). 
+To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters --- linear coefficients in our case --- to produce the best fit. 
+The training procedure includes two stages: feature selection and fine-tuning. (ZZZ - better names?)
+
+\subsubsection{First stage: feature selection}
+
+Main equation. Why is OLS bad algorithm for fitting?
+
+We explored the applicability of two methods to perform feature selection: elastic net regularization (EN) and genetic algorithm (GA). 
+While both algorithms produce almost identical results the advantage of GA is that it can be easily generalized to features with nonlinear fitting coefficients (e.g. exponentially decaying functions can be included in the feature list later).
+
+\textit{Genetic algorithm.} In a generic genetic algorithm (GA), a population of candidate solutions to the optimization problem is evolved iteratively towards better solutions. Each solution is described by a chromosome --- a collection of genes --- that undergoes mutations and crossovers in the evolution process. In our case, the analytical form of the energy equation is the chromosome whereas each POID term of the equation represents a gene. It is worth noting that parameters $c$ in the energy equation are adjusted with conventional linear or nonlinear optimization methods, without GA.
+
+We employed a straightforward GA. 
+The initial population of equations, all with the same number of features, is seeded randomly. 
+The fitness of an equation is measured by the RMSE calculated for the training set. 
+All equations in the population are sorted according to their RMSE and the top 50\% selected as the elite fraction.
+A half of a new population is created in the crossover (45\%) and mutation (5\%) processes from elite equations while the other half is re-generated randomly. 
+In the crossover process, two equations are selected at random from the elite fraction. 60\% of random POIDs are taken from the equation with lower RMSE while the remaining 40\% of POIDs are taken from the other equation. 
+In the mutation process, between 5 and 25\% of all POIDs are selected randomly and replaced with other random POIDs. 
+The evolution stops after a preset number of generations fails to lower RMSE for the training set. Further details and numerical settings of the algorithm are presented in the Supplementary Information
+
+\textit{Elastic net}. Basic idea and main equation. ZZZ- Do we really need to have EN in the main text?
+
+As it was mentioned if there is a group of highly correlated variables, 
+then the LASSO selects just one variable from a group and drop the 
+others. This is not convenient because in our case LASSO can drop 
+important features while keeping less important one. EN can overcome 
+this problem since it contains two penalties: linear and quadratic. By 
+adjusting the two regularization factors, it is possible to force EN to 
+keep dependent features in the model. Later the unnecessary features 
+will be removed by another algorithm. Therefore, EN allows to reduce the 
+number of features from thousands to hundreds or even less. Next step is 
+to reduce the number of features decreased by EN to desired value. It 
+can be done by the backwards elimination algorithm (BE), which removes 
+the feature Basically, BE removes the worst (less significant feature), 
+one at a time, based on criterion provided by fitness function until the desired number of features is reached:
+
+Since after the reduction of number of features by EN the number of 
+observations is much greater than number of variables, so we can use 
+ordinary least squares (OLS) as a fitness function and the criterion 
+would be minimum squared error (MSE). BE can be used for linear and 
+nonlinear features; the only difference is different fitness functions.
+
+\subsubsection{Second stage: fine-tuning with greedy graph traversal algorithm} 
+
+The second stage of the training processes is designed to deal with strong correlation (e.g. multicollinearity) between features and improve the functional form of the energy equation previously derived by either EN or GA. 
+It is worth noting that commonly-employed methods for resolving linear dependence issues (e.g. principal component analysis) are not applicable in our case because our main goal is to keep our features pure (i.e. uncontaminated by the admixture of other closely related nearly-dependent features). 
+Therefore, we designed a fine-tuning procedure that attempts to lower the RMSE of the model by swapping strongly-correlated features. 
+%RZK: Is RMSE defined by this point
+
+The fine-tuning starts with the calculation of the correlation matrix (i.e. matrix of Pearson correlation coefficients) for all features, including those not chosen in the first stage. 
+The correlation coefficients are then used to assign a list of strongly-correlated equivalents to each feature. 
+Two features are considered strongly-correlated if their correlation coefficient is greater than a pre-selected threshold value. 
+Finally, a greedy graph traversing (GGT) algorithm, in which descendant nodes are created by replacing a feature with its highly-correlated equivalents, is used to improve the energy model. 
+The total number of nodes in the graph --- $\mathcal{O}(n^k)$, where $k$ is the number of selected features and $n$ is the average number of highly-correlated equivalents per feature --- is typically too large for an exhaustive search. 
+A heuristic approach to reduce the number of traversed nodes is described in Algorithm~\ref{SI-fig:ggta} in the Supplementary Information. 
+In essence, our GGT method inserts a newly created descendant into the waiting list only if this node has lower RMSE than all other nodes of the same generation (i.e. shortest distance to the root). 
+Otherwise, the child node and all its descendants are ignored. 
+There is only one waiting list for the graph and it is kept sorted according to RMSE. 
+The GGT traverses the graph by picking the best node from the waiting list and then checking if it still has the lowest RMSE within its generation. 
+The worst nodes are removed from the waiting list once it reaches the predefined maximum length. 
+
+As any heuristic algorithm, our GTT approach is not guaranteed to find the best possible energy equation for a fixed number of features but nonetheless is proven crucial for improve the GA results in a reasonable amount of time.
+
+%At each iteration, the algorithm creates children nodes by replacing a feature with its highly-correlated equivalents. [VLAD: I thought that only one features is replaced in each level. It is unclear how exactly do you create children nodes.] If a newly created node satisfies the selection criteria listed below it is inserted into the waiting list, which is always kept sorted according to the RMSE of the nodes. It is worth noting that there is only one waiting list for children of all levels. The best node is then extracted from the waiting list and the algorithm proceeds to its next iteration. Algorithm remembers the best node and stops when the waiting list is empty or the maximum number of iterations is reached.
+%
+%\textit{Selection criteria. These are alternative options that control the generation of child nodes:}
+%\begin{itemize}
+%\item Fast: each newly created node compares with best node and goes into queue only if it has better fitness. Algorithm works as one branch of depth first search in this case.
+%\item Parent: if newly created node is better than its parent it goes to queue.
+%\item Level: The best node is picked from the waiting list. If its RMSE is currently the best on its level then all child nodes are created from the this node in ZZZ order. If the fitness of a newly created node child node is the best on its level then it is inserted into the waiting list, which is always kept sorted according to the RMSE of the nodes. 
+%\item Slow: all nodes produced go to queue and algorithm becomes the breadth-first search. It scans through all graph and can find the best possible solution. However, its complexity --- $\mathcal{O}(n^k)$ where $k$ is the number of selected features and $n$ is the average number of highly-correlated features per selected feature --- makes it unmanageable in most cases.
+%\end{itemize}
+
+%A* is greedy depth first search graph algorithm with heuristic function that speeds up computation by decreasing the number of nodes to be evaluated. %General form of its fitness function if f(n) = g(n) + h(n) where g(n) is path cost function that in our case represent the level of node n in search graph and h(n) - heuristic function which is "shortest path" to the goal. Since our goal is fitness = 0, then we can use MSE as a parameter for h(n). 
+
+%Comments on performance and accuracy: Since the subset contains only 20 or less features in our case the algorithm works relatively fast. Its speed depends on MinCorrelation variable that influence the formation of alternate features lists. The closer this variable to 0 the greater lists and the lower performance. %When MinCorrelation approaches to 0 the number of children nodes increases, therefore increases the probability of improving the fitness.
+
+%Comments on accuracy: focused on eliminating collinear variables in such a way that final fit will contain only one feature for each collinear group. It is not the ideal representation but it allows us having good enough fit minimize number of variables that would give a compact energy equation. 
+
+%%% FAST post-GA feature reduction
+\subsubsection{Optional backward feature elimination} 
+
+The final number of selected features can be adjusted from the start in the GA method by changing the size of a chromosome. 
+While the final number of retained features in the EN algorithm is not known \emph{a priori} it can also be adjusted by restarting the method with different regularization strength. 
+However, in both cases, it is useful to estimate quickly how the quality of the fit depends on the number of predictors without repeating the entire training process. 
+Therefore, we implemented a fast feature elimination procedure that starts with an existing feature set, defines the worst feature as the one giving the smallest increase in fitness, then drops the worst feature from the set, and performs the final fine tuning based on the GTTA algorithm.  The elimination procedure is repeated until only one feature is left in the set.
+
 \subsection{Molecular systems and training sets} 
 
 %Lennard-Jones model.
@@ -181,129 +253,6 @@ be obtained using only single distances. However, if we have three water
 molecules, the full model should be used since the simplified one cannot 
 give accurate fit. 
 
-
-\subsection{Training procedure} 
-
-As described above, POIDs and their products serve as \textit{features} (ZZZ - define equivalent and non-equivalent features). 
-To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters --- linear coefficients in our case --- to produce the best fit. 
-The training procedure includes two stages: feature selection and fine-tuning. (ZZZ - better names?)
-
-\textbf{First stage: feature selection}
-
-Main equation. Why is OLS bad algorithm for fitting?
-
-We explored the applicability of two methods to perform feature selection: elastic net regularization (EN) and genetic algorithm (GA). 
-While both algorithms produce almost identical results the advantage of GA is that it can be easily generalized to features with nonlinear fitting coefficients (e.g. exponentially decaying functions can be included in the feature list later).
-
-\textit{Genetic algorithm.} In a generic genetic algorithm (GA), a population of candidate solutions to the optimization problem is [improved]/evolved iteratively towards better solutions. Each solution is described by a chromosome --- a collection of genes --- that undergoes mutations and crossovers in the evolution process. In our case, it is the analytical form of the energy equation that represents a chromosome whereas each POID term in the equation represents a gene. It is worth noting that parameters $c$ of the equation are optimized with conventional linear or nonlinear optimization methods, without GA.
-%Population of chromosomes improved by iterative mutations and crossovers.
-
-We used classic genetic algorithm to select best subset of features from the initial set. Since the number of desired selected features is relatively small and for our model does not exceeds 20 features OLS can be used as a fitness function. The goal of GA is to find the best possible combination of features provided by large feature set. GA itself is been used as a search algorithm; at the beginning it converges relatively fast but very slow at the end. The ideal fitness value is equal to 0. After some iterations (its number depends on many parameters and on dataset as well) GA stops improving its best child, therefore it terminates and gives its best result to A* search. GA contains many parameters that can be varied in order to achieve better performance and faster convergence.\\ 
-GA parameters:\\
-'GA population size': 100,\\
-'GA chromosome size': 15,\\
-'GA stop time': 600,\\
-'GA max generations': 200,\\
-'GA mutation probability': 0.3,\\
-'GA mutation interval': [1, 4],\\
-'GA elite fraction': 0.5,\\
-'GA mutation crossover fraction': 0.5,\\
-'GA crossover fraction interval': [0.6, 0.4],\\
-'GA use correlation for mutation': False,\\
-'GA min correlation for mutation': 0.8,\\
-'Random' or 'Best' - rank genes in each chromosome and take most important for crossover.\\
-'GA crossover method': 'Random',\\
-'Random' or 'Correlated' - pool with candidates for possible replacement created through correlation matrix rule.\\
-'GA mutation method': 'Random'\\
-            
-Lists of highly-correlated features can be useful in the mutation method in GA (option 'Correlated') so that the mutating gene will be replaced by another one from the list. When MinCorrelation approaches 0 mutation procedure in GA becomes 'Random'.
-            
-Stopping criteria are elapsed time, number of iterations and tolerance. 
-
-The main difference from classic GA is that mutation function replaces randomly selected feature with alternate feature from correlation list. 
-
-VLAD: How do we seed the population?
-
-\textit{Elastic net}. Basic idea and main equation. ZZZ- Do we really need to have EN in the main text?
-
-As it was mentioned if there is a group of highly correlated variables, 
-then the LASSO selects just one variable from a group and drop the 
-others. This is not convenient because in our case LASSO can drop 
-important features while keeping less important one. EN can overcome 
-this problem since it contains two penalties: linear and quadratic. By 
-adjusting the two regularization factors, it is possible to force EN to 
-keep dependent features in the model. Later the unnecessary features 
-will be removed by another algorithm. Therefore, EN allows to reduce the 
-number of features from thousands to hundreds or even less. Next step is 
-to reduce the number of features decreased by EN to desired value. It 
-can be done by the backwards elimination algorithm (BE), which removes 
-the feature Basically, BE removes the worst (less significant feature), 
-one at a time, based on criterion provided by fitness function until the desired number of features is reached:
-
-Since after the reduction of number of features by EN the number of 
-observations is much greater than number of variables, so we can use 
-ordinary least squares (OLS) as a fitness function and the criterion 
-would be minimum squared error (MSE). BE can be used for linear and 
-nonlinear features; the only difference is different fitness functions.
-
-\textbf{Second stage: fine-tuning using depth-first search algorithm.} The second stage of the training processes is designed to deal with strong correlation (e.g. multicollinearity) between features and improve the functional form of the energy equation previously derived by either EN or GA. 
-It is worth noting that commonly-employed methods for resolving linear dependence issues (e.g. principal component analysis) are not applicable in our case because our main goal is to keep our features pure (i.e. uncontaminated by the admixture of other closely related nearly-dependent features). 
-Therefore, we designed a fine-tuning procedure that attempts to lower the RMSE of the model by swapping strongly-correlated features. 
-%RZK: Is RMSE defined by this point
-
-The fine-tuning starts with the calculation of the correlation matrix (i.e. matrix of Pearson correlation coefficients) for all features, including those not selected in the first stage. 
-The correlation coefficients are then used to assign a list of strongly-correlated equivalents to each feature. Two features are considered strongly-correlated if their correlation coefficient is greater than a pre-selected threshold value. 
-Finally, the features are systematically replaced with their highly-correlated equivalents following the algorithm [called greedy-ZZZ and] presented below. 
-
-\begin{figure}
-\includegraphics[width=0.45\textwidth]{media/water_distances_3.eps}
-\caption{A* search tree}\label{Fig:A_star_tree}
-\end{figure}
-
-At each iteration, the algorithm creates children nodes by replacing a feature with its highly-correlated equivalents. [VLAD: I thought that only one features is replaced in each level. It is unclear how exactly do you create children nodes.] If a newly created node satisfies the selection criteria listed below it is inserted into the waiting list, which is always kept sorted according to the RMSE of the nodes. It is worth noting that there is only one waiting list for children of all levels. The best node is then extracted from the waiting list and the algorithm proceeds to its next iteration. Algorithm remembers the best node and stops when the waiting list is empty or the maximum number of iterations is reached.
-
-\textit{Selection criteria. Alternative options that control insertion/extraction of nodes into/from the waiting list.}
-\begin{itemize}
-\item Fast: each newly created node compares with best node and goes into queue only if it has better fitness. Algorithm works as one branch of depth first search in this case.
-\item Parent: if newly created node is better than its parent it goes to queue.
-\item Level: if the fitness of newly created node is the best that exist on its level (see Figure~\ref{Fig:A_star_tree}) it goes into the waiting list. [VLAD: Is it discarded otherwise?] At the same time, when a node is extracted from the waiting list, its fitness compared with the best for its level since by the time algorithm reached that node level's fitness could be improved already and this node does not match the selection criteria. This approach gives good balance between computation speed and accuracy of the fit and is used in the majority of our calculations.
-\item Slow: all nodes produced go to queue and algorithm becomes [greedy?/sorted?] breadth-first search [not really]. It scans through all tree and can find the best possible solution. However, its complexity --- $\mathcal{O}(n^k)$ where $k$ is the number of selected features and $n$ is the average number of highly-correlated features per selected feature --- makes it unmanageable in most cases.
-\end{itemize}
-
-Stopping criteria: Max queue length is 1000 - maximal length of queue of waiting nodes, weakest node after this length drops. Algorithm stops if for any feature from the selected subset no better alternatives was found. 
-
-%A* is greedy depth first search tree algorithm with heuristic function that speeds up computation by decreasing the number of nodes to be evaluated. %General form of its fitness function if f(n) = g(n) + h(n) where g(n) is path cost function that in our case represent the level of node n in search tree and h(n) - heuristic function which is "shortest path" to the goal. Since our goal is fitness = 0, then we can use MSE as a parameter for h(n). 
-
-Comments on performance and accuracy: Since the subset contains only 20 or less features in our case the algorithm works relatively fast. Its speed depends on MinCorrelation variable that influence the formation of alternate features lists. The closer this variable to 0 the greater lists and the lower performance. %When MinCorrelation approaches to 0 the number of children nodes increases, therefore increases the probability of improving the fitness.
-
-Comments on accuracy: focused on eliminating collinear variables in such a way that final fit will contain only one feature for each collinear group. It is not the ideal representation but it allows us having good enough fit minimize number of variables that would give a compact energy equation. 
-
-%%% FAST post-GA feature reduction
-\textbf{Optional backward feature elimination.} 
-The final number of selected features can be adjusted from the start in the GA method by changing the size of a chromosome. 
-While the final number of retained features in the EN algorithm is not known \emph{a priori} it can also be adjusted by restarting the method with different regularization strength. 
-However, in both cases, it is useful to estimate quickly how the quality of the fit depends on the number of predictors without repeating the entire training process. 
-Therefore, we implemented a fast feature elimination procedure that starts with an existing feature set, defines the worst feature as the one giving the smallest increase in fitness, then drops the worst feature from the set, and performs the final fine tuning based on the ZZZ algorithm.  The elimination procedure is repeated until only one feature is left in the set.
-
-%\begin{table}[h]
-%\centering
-%\caption{Correlation matrix example for 5 variables}\label{Correlation_matrix}
-%\begin{tabular}{|l|l|l|l|l|l|}
-%\hline
-%  & X1 & X2 & X3 & X4 & X5 \\
-%\hline
-%X1 & 1.00 & 0.95 & 0.90 & 0.30 & 0.20 \\
-%\hline
-%X2 & 0.95 & 1.00 & 0.85 & 0.70 & 0.30 \\
-%\hline
-%X3 & 0.90 & 0.85 & 1.00 & 0.60 & 0.40 \\
-%\hline
-%X4 & 0.30 & 0.70 & 0.60 & 1.00 & 0.25 \\
-%\hline
-%X5 & 0.20 & 0.30 & 0.40 & 0.25 & 1.00 \\
-%\hline
-%\end{tabular}
-%\end{table}
 
 
 \section{Results and discussion}
@@ -657,17 +606,6 @@ The research was funded by the Natural Sciences and Engineering Research Council
 Grants (RGPIN-2016-0505). The authors are grateful to Compute Canada and, in particular, the McGill HPC Centre for computer time.
 
 \bibliography{learn-physics}
-
-%RZK0: uncomment the switch to separate SI from the main text
-%\else % maintext - SI switch
-
-\newpage
-\clearpage
-%\widetext
-\setcounter{figure}{0}
-\setcounter{page}{1}
-\renewcommand{\thefigure}{S\arabic{figure}}
-
 
 \section{LASSO} 
 
