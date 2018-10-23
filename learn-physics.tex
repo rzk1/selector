@@ -82,9 +82,7 @@ Symbolic regression (10) is an established method based on evolutionary computat
 
 \section{Methodology}
 
-\subsection{Energy model and terminology}
-
-%\red Short description of the general methodology with only basic equations and motivation behind them. All examples related to a specific model (e.g. water) will be presented in Results and Discussion. Description of the code (not be confused with algorithm) should be moved to the Supplementary Information. All results should be presented in Results and Discussion, unless they are necessary to understand our methodology. \old
+\subsection{Model energy equations}
 
 This expression also satisfies another important physical constraints: it makes energy invariant to translations and rotations of the entire molecular system. 
 
@@ -95,12 +93,13 @@ For any system, the potential energy as a function of interatomic distances sati
 \lim_{R_i \rightarrow 0} E (\mathbf{R}) = \infty
 \end{eqnarray}
 
-Define: Features
+Define: Features. As described above, POIDs and their products serve as \textit{features} (ZZZ - define equivalent and non-equivalent features). Single-distance, double-distance [features].
+
 
 We chose powers of inverse distances (POIDs) as a set of [features] because their sum can easily satisfy these two very general physical constraints:
 \begin{eqnarray}
-E (&R_1&, R_2, \ldots, R_N) = \sum_{k=1}^{M_1} \sum_{p=1}^{N} \frac{c_{pk}}{R_p^k} + \sum_{k,m=1}^{M_2} \sum_{p>q}^{N} \frac{c_{pkqm}}{R_p^k R_q^m} + \nonumber \\
-&+& \ldots +\sum_{k,m,n=1}^{M_G} \sum_{p>q>r}^{N} \frac{c_{pkqm\ldots rn}}{R_p^k R_q^m \ldots R_r^n} \equiv \mathbf{f}\cdot \mathbf{c}
+E (&R_1&, R_2, \ldots, R_N; \mathbf{c}) = \sum_{k=1}^{M_1} \sum_{p=1}^{N} \frac{c_{pk}}{R_p^k} + \sum_{k,m=1}^{M_2} \sum_{p>q}^{N} \frac{c_{pkqm}}{R_p^k R_q^m} + \nonumber \\
+&+& \ldots +\sum_{k,m,n=1}^{M_G} \sum_{p>q>r}^{N} \frac{c_{pkqm\ldots rn}}{R_p^k R_q^m \ldots R_r^n} \equiv \mathbf{f}\cdot \mathbf{c} \label{eq:energy}
 \end{eqnarray}
 %
 where $N = \frac{1}{2}A(A-1)$ is the number of distances $R$ between $A$ atoms, M$_{g}$ is the maximum power for a term containing the product of $g$ distances, $G$ is the maximum ZZZ, $\mathbf{c}$ is the vector of tunable coefficients, $\mathbf{f}$ is the vector of features. 
@@ -109,23 +108,44 @@ In order to account for the equivalence of atoms of the same element and to make
 Taking this symmetry into account allows to decrease the number of independent features in the model and training time substantially. 
 For example, the energy of two water molecules depends on 15 distances, only five of which are unique: oxygen-oxygen, intermolecular oxygen-hydrogen, intramolecular oxygen-hydrogen, intermolecular oxygen-hydrogen, intramolecular hydrogen-hydrogen.
 
-Despite satisfying a variety of constraints, expression (3) remains very general. 
-The multipole expansion of intermolecular energies implies that POIDs can adequately represent a wide variety of intermolecular potentials. 
-The flexibility of the model \red is very high\old as it includes many-body beyond simple pairwise interactions through products 
+Despite satisfying a variety of important physical constraints, equation~(\ref{eq:energy}) remains general as it represents the multipole expansion of the intermolecular interaction energies. 
+This implies that POID are sufficient to adequately represent a wide variety of intermolecular potentials. 
+The flexibility of the model is also high because it includes many-body terms beyond simple pairwise interactions through products 
 of POIDs.
 
 \subsection{Training procedure} 
 
-As described above, POIDs and their products serve as \textit{features} (ZZZ - define equivalent and non-equivalent features). 
+Ordinary least squares (OLS) method finds the best parameters in the linear regression model~(\ref{eq:energy}) by minimizing objective function with respect to $\mathbf{c}$
+%
+\begin{eqnarray}
+\Delta_{\text{OLS}} = \frac{1}{2} \sum_{i=1}^{T} \left( E_i -  E (\mathbf{R}_{i}; \mathbf{c}) \right)^2 \label{eq:OF-OLS}
+\end{eqnarray}
+%
+where $\mathbf{R}_i$ STOP.
+
+Unfortunately this method is not suitable for recovering a minimalistic and physically relevant energy equation based on numerical data. The undesirable behavior of OLS is demonstrated on a simple example of the Lennard-Jones (LJ) potential
+%
+\begin{eqnarray}
+E (R) = 4 \left( \frac{1}{R^{12}} - \frac{1}{R^{6}} \right)\label{eq:LJenergy}
+\end{eqnarray}
+%
+and an attempted recovery of this equation starting from Eq.~(\ref{eq:energy}) with fifteen suggested features ($M_1=15$ and $M_2=0$). OLS parameters optimized to reproduce numerical data rounded to $10^{-7}$ reduced LJ units differ from the original parameters by orders of magnitude (Figure~\ref{Fig:OLS}). The main reason for this result is that OLS parameters are redundant and are essentially tuned to reproduce numerical noise and not the important data.
+
+%VLAD: plot coefficients powers from 1 to 15. Use bar graph, x-axis label "Power", y-axis "Coefficient, reduced LJ units".
+%-0.0240097, 0.612791, -7.043, 48.2289, -219.296, 693.937, -1594.65, 2633.41, -3107.96, 2523.57, -1273.46, 266.353, 95.1984, -72.4919, 13.6115
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{media/LJ-OLS.eps}
+\caption{OLS fitting coefficients}\label{Fig:OLS}
+\end{figure}
+
 To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters --- linear coefficients in our case --- to produce the best fit. 
 The training procedure includes two stages: feature selection and fine-tuning. (ZZZ - better names?)
 
 \subsubsection{First stage: feature selection}
 
-Main equation. Why is OLS bad algorithm for fitting?
-
 We explored the applicability of two methods to perform feature selection: elastic net regularization (EN) and genetic algorithm (GA). 
-While both algorithms produce almost identical results the advantage of GA is that it can be easily generalized to features with nonlinear fitting coefficients (e.g. exponentially decaying functions can be included in the feature list later).
+While both algorithms produce almost identical results for the linear model in Eq.~(\ref{eq:energy}) the advantage of GA is that it can be easily generalized to features with nonlinear fitting coefficients (e.g. exponentially decaying functions will be included into the list of feature in the future). Furthermore, Comparison of the EN and GA performance 
 
 \textit{Genetic algorithm.} In a generic genetic algorithm (GA), a population of candidate solutions to the optimization problem is evolved iteratively towards better solutions. Each solution is described by a chromosome --- a collection of genes --- that undergoes mutations and crossovers in the evolution process. In our case, the analytical form of the energy equation is the chromosome whereas each POID term of the equation represents a gene. It is worth noting that parameters $c$ in the energy equation are adjusted with conventional linear or nonlinear optimization methods, without GA.
 
@@ -181,8 +201,6 @@ The worst nodes are removed from the waiting list once it reaches the predefined
 
 As any heuristic algorithm, our GTT approach is not guaranteed to find the best possible energy equation for a fixed number of features but nonetheless is proven crucial for improve the GA results in a reasonable amount of time.
 
-%At each iteration, the algorithm creates children nodes by replacing a feature with its highly-correlated equivalents. [VLAD: I thought that only one features is replaced in each level. It is unclear how exactly do you create children nodes.] If a newly created node satisfies the selection criteria listed below it is inserted into the waiting list, which is always kept sorted according to the RMSE of the nodes. It is worth noting that there is only one waiting list for children of all levels. The best node is then extracted from the waiting list and the algorithm proceeds to its next iteration. Algorithm remembers the best node and stops when the waiting list is empty or the maximum number of iterations is reached.
-%
 %\textit{Selection criteria. These are alternative options that control the generation of child nodes:}
 %\begin{itemize}
 %\item Fast: each newly created node compares with best node and goes into queue only if it has better fitness. Algorithm works as one branch of depth first search in this case.
@@ -225,13 +243,7 @@ Only training set is being using for fitting procedure and only test set is bein
 In order to analyze the efficiency of predicting algorithm, the number of observations can be reduced to required quantity. 
 Some algorithms require data standardization, so before doing anything we have to perform feature scaling for training set in order to have zero mean and unit variance for each feature.
 
-[Related to Models] For three water molecules where we have 9 atoms the total number of 
-distances = 9$^{2}$/2 - 9/2 = 36. Using same set of powers (M$_{1
-}$=15 and M$_{2}$=7) without feature reduction we would have 
-540+17640=18180 features. However, reducing the number of features using 
-the describe above technique and discarding all intramolecular distances 
-the reduced number of features decreases to only 45+630=675 which is 
-much more convenient and manageable for fitting.
+[Related to Models] For three water molecules where we have 9 atoms the total number of distances = 9$^{2}$/2 - 9/2 = 36. Using same set of powers (M$_{1}$=15 and M$_{2}$=7) without feature reduction we would have 540+17640=18180 features. However, reducing the number of features using the describe above technique and discarding all intramolecular distances the reduced number of features decreases to only 45+630=675 which is much more convenient and manageable for fitting.
 
 [Related to Models] However, calculation of variance influence factors showed that there 
 exists very strong multicollinearity between features which indicates 
@@ -356,7 +368,7 @@ In order to analyze deeper system B, we extended our previous model to two terms
 %ZZZ - note raltion between charges.
 Second term might be useful if there exists dependence between our features generated using first part of equation~(\ref{eq:tip3p}). In this case, the second term will improve the goodness of the fit.
 
-%VLAD: Label panels A, B, C in the two three-panel figures. Combine figures 4 and 8 into one panel.
+%VLLAD: Label panels A, B, C in the two three-panel figures. Combine figures 4 and 8 into one panel.
 
 \begin{figure}
 \includegraphics[width=0.45\textwidth]{media/B2_GA_PATH_RMSE.eps}
