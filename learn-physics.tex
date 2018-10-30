@@ -98,7 +98,7 @@ Define: Features. As described above, POIDs and their products serve as \textit{
 
 We chose powers of inverse distances (POIDs) as a set of [features] because their sum can easily satisfy these two very general physical constraints:
 \begin{eqnarray}
-E (&R_1&, R_2, \ldots, R_N; \mathbf{c}) = \sum_{k=1}^{M_1} \sum_{p=1}^{N} \frac{c_{pk}}{R_p^k} + \sum_{k,m=1}^{M_2} \sum_{p>q}^{N} \frac{c_{pkqm}}{R_p^k R_q^m} + \nonumber \\
+E_M (&R_1&, \ldots, R_N; \mathbf{c}) = \sum_{k=1}^{M_1} \sum_{p=1}^{N} \frac{c_{pk}}{R_p^k} + \sum_{k,m=1}^{M_2} \sum_{p>q}^{N} \frac{c_{pkqm}}{R_p^k R_q^m} + \nonumber \\
 &+& \ldots +\sum_{k,m,n=1}^{M_G} \sum_{p>q>r}^{N} \frac{c_{pkqm\ldots rn}}{R_p^k R_q^m \ldots R_r^n} \equiv \mathbf{f}\cdot \mathbf{c} \label{eq:energy}
 \end{eqnarray}
 %
@@ -115,13 +115,13 @@ of POIDs.
 
 \subsection{Training procedure} 
 
-Ordinary least squares (OLS) method finds the best parameters in the linear regression model~(\ref{eq:energy}) by minimizing objective function with respect to $\mathbf{c}$
+Ordinary least squares (OLS) method finds the best parameters in the linear regression model~(\ref{eq:energy}) by minimizing the objective function $\Delta_{\text{OLS}}$ with respect to $\mathbf{c}$
 %
 \begin{eqnarray}
-\Delta_{\text{OLS}} = \frac{1}{2} \sum_{i=1}^{T} \left( E_i -  E (\mathbf{R}_{i}; \mathbf{c}) \right)^2 \label{eq:OF-OLS}
+\Delta_{\text{OLS}} = \frac{1}{2} \sum_{i=1}^{T} \left( E_D(\mathbf{R}_{i}) -  E_M (\mathbf{R}_{i}; \mathbf{c}) \right)^2 \label{eq:OF-OLS}
 \end{eqnarray}
 %
-where $\mathbf{R}_i$ STOP.
+where $T$ is the number of datapoints in the training set, $E_D$ is the target energy pre-computed for each datapoint, and $E_M$ is the energy predicted by the model.
 
 Unfortunately this method is not suitable for recovering a minimalistic and physically relevant energy equation based on numerical data. The undesirable behavior of OLS is demonstrated on a simple example of the Lennard-Jones (LJ) potential
 %
