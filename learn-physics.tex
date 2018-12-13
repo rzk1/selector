@@ -13,7 +13,8 @@
 
 \begin{document}
 
-\title{Machine learns the physics of intermolecular interactions}
+%\title{Machine learns the physics of intermolecular interactions}
+\title{Machine learning algorithm finds analytical equations to describe the energetics of intermolecular interactions}
 
 \author{Volodymyr Sakun}
 \affiliation{Department of Civil Engineering, McGill University, 817 Sherbrooke St. West, Montreal, QC H3A 0C3, Canada}
@@ -24,14 +25,21 @@
 %\date{\today}
 
 \begin{abstract}
-Machine learning algorithms are now widely applied to reconstruct potential energy surfaces (PES) using accurate quantum mechanical energies as training data. Artificial neural networks (ANN) and Gaussian-process regressors (GPR) excel at this task because of their highly flexible representation of PES and complete neglect of the underlying physics of interaction between atoms. This design makes ANN and GPR universal approximators. Unlike fixed-form force fields they can adapt and accurately mimic many PES regardless of the complexity of physical interactions. However, the high adaptability comes at a price of poor extrapolation ability and transferability. ANN and GPR require large training datasets and fail to describe the regions of PES where training data is sparse. Here, we developed another versatile PES-modeling machine learning method with an improved extrapolation ability by accounting for the physics of interactions while still keeping the PES model flexible. The learning algorithm presented in this work utilizes the evolutionary symbolic regression in the space of physically relevant functions. Unlike many existing methods, it adjusts both the explicit analytical representation of the PES model and its parameters to yield a physically appropriate and yet simple equation for the energy. When applied to interactions between molecules in gas-phase clusters, machine finds that the best two-body representation of many quantum mechanical PES is a combination of the Coulomb and Lennard-Jones-like terms---in agreement with human-derived force fields (e.g. TIP3P for water molecules). Furthermore, the automatic incorporation of many-body effects enables machine to suggest corrections to force fields. For example, the algorithm presented here derived simple analytical expressions that capture cooperativity effects in water clusters.
+Machine learning is now widely applied to reconstruct \emph{ab initio} potential energy surfaces (PES). 
+Universal approximators such as artificial neural networks and Gaussian-process regressors excel at this task because they can mimic accurately even most complex PES functions.
+However, the high flexibility of these methods comes at a price of poor extrapolation ability and transferability, which stem from the complete neglect of the underlying physics of interaction between atoms. 
+Here, we proposed a learning algorithm that performs the evolutionary symbolic regression in the space of physically relevant functions to ``derive'' a simple yet accurate analytical equation for the potential energy of weakly-interacting molecules. 
+By accounting for the physics of interaction the model produces accurate results even in the PES regions devoid of training data.
+Remarkably, when applied to interactions between water molecules, machine finds that the best two-body representation of quantum mechanical PES is a combination of the Coulomb and Lennard-Jones terms --- in agreement with human-derived force fields equations.  
+Furthermore, the automatic incorporation of many-body effects enables machine to suggest corrections to these force fields. 
+The approach presented in this work can be generalized to find analytical representation of PES for complex molecules and materials.
 \end{abstract}
 
 \maketitle
 
 \section{Introduction}
 
-Machine learning algorithms are now widely applied to reconstruct potential energy surfaces (PES) using accurate quantum mechanical energies as training data. Artificial neural networks (ANN) and Gaussian-process regressors (GPR) excel at this task because of their highly flexible representation of PES and complete neglect of the underlying physics of interaction between atoms. This design makes ANN and GPR universal approximators. Unlike fixed-form force fields they can adapt and accurately mimic many PES regardless of the complexity of physical interactions. However, the high adaptability comes at a price of poor extrapolation ability and transferability. ANN and GPR require large training datasets and fail to describe the regions of PES where training data is sparse. Here, we developed another versatile PES-modeling machine learning method with an improved extrapolation ability by accounting for the physics of interactions while still keeping the PES model flexible. The learning algorithm presented in this work utilizes the evolutionary symbolic regression in the space of physically relevant functions. Unlike many existing methods, it adjusts both the explicit analytical representation of the PES model and its parameters to yield a physically appropriate and yet simple equation for the energy. When applied to interactions between molecules in gas-phase clusters, machine finds that the best two-body representation of many quantum mechanical PES is a combination of the Coulomb and Lennard-Jones-like terms---in agreement with human-derived force fields (e.g. TIP3P for water molecules). Furthermore, the automatic incorporation of many-body effects enables machine to suggest corrections to force fields. For example, the algorithm presented here derived simple analytical expressions that capture cooperativity effects in water clusters.
+%Long conference abstract: Machine learning algorithms are now widely applied to reconstruct potential energy surfaces (PES) using accurate quantum mechanical energies as training data. Artificial neural networks (ANN) and Gaussian-process regressors (GPR) excel at this task because of their highly flexible representation of PES and complete neglect of the underlying physics of interaction between atoms. This design makes ANN and GPR universal approximators. Unlike fixed-form force fields they can adapt and accurately mimic many PES regardless of the complexity of physical interactions. However, the high adaptability comes at a price of poor extrapolation ability and transferability. ANN and GPR require large training datasets and fail to describe the regions of PES where training data is sparse. Here, we developed another versatile PES-modeling machine learning method with an improved extrapolation ability by accounting for the physics of interactions while still keeping the PES model flexible. The learning algorithm presented in this work utilizes the evolutionary symbolic regression in the space of physically relevant functions. Unlike many existing methods, it adjusts both the explicit analytical representation of the PES model and its parameters to yield a physically appropriate and yet simple equation for the energy. When applied to interactions between molecules in gas-phase clusters, machine finds that the best two-body representation of many quantum mechanical PES is a combination of the Coulomb and Lennard-Jones-like terms---in agreement with human-derived force fields (e.g. TIP3P for water molecules). Furthermore, the automatic incorporation of many-body effects enables machine to suggest corrections to force fields. For example, the algorithm presented here derived simple analytical expressions that capture cooperativity effects in water clusters.
 
 
 Machine learning shows enormous promise for modeling of materials and molecules~\cite{ceriotti-science}. 
@@ -80,74 +88,92 @@ Connections to symbolic regression and feature selection algorithms.
 
 Symbolic regression (10) is an established method based on evolutionary computation (11) for searching the space of mathematical expressions while minimizing various error metrics [see section S4 in the supporting online material (SOM)]. Unlike traditional linear and nonlinear regression methods that fit parameters to an equation of a given form, symbolic regression searches both the parameters and the form of equations simultaneously (see SOM section S6). Initial expressions are formed by randomly combining mathematical building blocks such as algebraic operators {+, –, ÷, ×}, analytical functions (for example, sine and cosine), constants, and state variables. New equations are formed by recombining previous equations and probabilistically varying their subexpressions. The algorithm retains equations that model the experimental data better than others and abandons unpromising solutions. After equations reach a desired level of accuracy, the algorithm terminates, returning a set of equations that are most likely to correspond to the intrinsic mechanisms underlying the observed system.
 
+
 \section{Methodology}
 
 \subsection{Model energy equations}
 
-This expression also satisfies another important physical constraints: it makes energy invariant to translations and rotations of the entire molecular system. 
-
-For any system, the potential energy as a function of interatomic distances satisfies two constraints: it approaches zero when all atoms are infinitely far from each other and it becomes infinite as the distance between any two atoms approaches zero.
+For any molecular system, the potential energy as a function of distances between molecules satisfies two constraints: it approaches zero when all molecules are infinitely far from each other and it becomes infinite as the distance between any two atoms approaches zero.
 %
 \begin{eqnarray}
 \lim_{\forall R_i \rightarrow \infty} E (\mathbf{R}) = 0 \\
-\lim_{R_i \rightarrow 0} E (\mathbf{R}) = \infty
-\end{eqnarray}
-
-Define: Features. As described above, POIDs and their products serve as \textit{features} (ZZZ - define equivalent and non-equivalent features). Single-distance, double-distance [features].
-
-
-We chose powers of inverse distances (POIDs) as a set of [features] because their sum can easily satisfy these two very general physical constraints:
-\begin{eqnarray}
-E_M (&R_1&, \ldots, R_N; \mathbf{c}) = \sum_{k=1}^{M_1} \sum_{p=1}^{N} \frac{c_{pk}}{R_p^k} + \sum_{k,m=1}^{M_2} \sum_{p>q}^{N} \frac{c_{pkqm}}{R_p^k R_q^m} + \nonumber \\
-&+& \ldots +\sum_{k,m,n=1}^{M_G} \sum_{p>q>r}^{N} \frac{c_{pkqm\ldots rn}}{R_p^k R_q^m \ldots R_r^n} \equiv \mathbf{f}\cdot \mathbf{c} \label{eq:energy}
+\lim_{\exists R_i \rightarrow 0} E (\mathbf{R}) = \infty
 \end{eqnarray}
 %
-where $N = \frac{1}{2}A(A-1)$ is the number of distances $R$ between $A$ atoms, M$_{g}$ is the maximum power for a term containing the product of $g$ distances, $G$ is the maximum ZZZ, $\mathbf{c}$ is the vector of tunable coefficients, $\mathbf{f}$ is the vector of features. 
-\red To make training flexible/ distances are classified as intermolecular and intramolecular. \old 
-In order to account for the equivalence of atoms of the same element and to make sure that the energy is invariant to permutation of atoms in the input, the fitting coefficients for the physically equivalent features are restricted to be equal. 
-Taking this symmetry into account allows to decrease the number of independent features in the model and training time substantially. 
-For example, the energy of two water molecules depends on 15 distances, only five of which are unique: oxygen-oxygen, intermolecular oxygen-hydrogen, intramolecular oxygen-hydrogen, intermolecular oxygen-hydrogen, intramolecular hydrogen-hydrogen.
+Furthermore, the potential energy is invariant to translations and rotations of the entire system.
 
-Despite satisfying a variety of important physical constraints, equation~(\ref{eq:energy}) remains general as it represents the multipole expansion of the intermolecular interaction energies. 
-This implies that POID are sufficient to adequately represent a wide variety of intermolecular potentials. 
-The flexibility of the model is also high because it includes many-body terms beyond simple pairwise interactions through products 
-of POIDs.
+Using the multipole expansion as a rough guiding principle, we chose a sum of products of the inverse distances (POIDs) to model the  energy: 
+%
+\begin{equation}
+\begin{split}
+E_M (&\mathbf{R}; \mathbf{C}) = \sum_{k=1}^{M_1} \sum_{p=1}^{N} \frac{C_{pk}}{R_p^k} + \sum_{k,m=1}^{M_2} \sum_{p>q}^{N} \frac{C_{pkqm}}{R_p^k R_q^m} + \\
+&+ \ldots +\sum_{k,m,n=1}^{M_G} \sum_{p>q>r}^{N} \frac{C_{pkqm\ldots rn}}{R_p^k R_q^m \ldots R_r^n} \equiv \mathbf{F}\cdot \mathbf{C} \label{eq:energy}
+\end{split}
+\end{equation}
+%
+where $\mathbf{R}$ is a vector of $N = \frac{1}{2}A(A-1)$ distances between $A$ atoms, $M_{g}$ is the maximum power for a term containing the product of $g$ distances, $G$ is the maximum number of distances in the denominator, $\mathbf{F}$ is a vector of $\sum_{g=1}^{G} (M_g N)^g /g!$ POIDs, which serve as \emph{features}, and $\mathbf{C}$ is the corresponding vector of tunable coefficients. 
+
+The model energy expression in Eq.~(\ref{eq:energy}) is analytically simple, easy to compute, sufficient flexible to reproduce the physics of a variety of interactions beyond the pairwise approximation, and naturally satisfies the important physical constraints mentioned above.
+
+In order to account for the equivalence of atoms of the same element and to make sure that the energy is invariant to permutation of atoms in the input, all distances are classified as intramolecular and intermolecular and the fitting coefficients for the physically equivalent features are restricted to be equal. 
+Taking this symmetry into account allows to reduce the training time substantially. 
+For example, the energy of two water molecules depends on 15 distances but only five of them are unique and require independent fitting coefficients: oxygen-oxygen, intermolecular oxygen-hydrogen, intramolecular oxygen-hydrogen, intermolecular oxygen-hydrogen, intramolecular hydrogen-hydrogen.
+
+We refer to the features that share the same fitting coefficient as equivalent features. The total number of independent fitting coefficients is equal to the number of non-equivalent groups of features. Features that include only one(two) distance(s) are called single(double)-distance features.
 
 \subsection{Training procedure} 
 
 Ordinary least squares (OLS) method finds the best parameters in the linear regression model~(\ref{eq:energy}) by minimizing the objective function $\Delta_{\text{OLS}}$ with respect to $\mathbf{c}$
 %
 \begin{eqnarray}
-\Delta_{\text{OLS}} = \frac{1}{2} \sum_{i=1}^{T} \left( E_D(\mathbf{R}_{i}) -  E_M (\mathbf{R}_{i}; \mathbf{c}) \right)^2 \label{eq:OF-OLS}
+\Delta_{\text{OLS}}(\mathbf{C}) = \frac{1}{2} \sum_{i=1}^{T} \left( E(\mathbf{R}_{i}) -  E_M (\mathbf{R}_{i}; \mathbf{C}) \right)^2 \label{eq:OF-OLS}
 \end{eqnarray}
 %
-where $T$ is the number of datapoints in the training set, $E_D$ is the target energy pre-computed for each datapoint, and $E_M$ is the energy predicted by the model.
+where $T$ is the number of datapoints in the training set, $E(\mathbf{R}_{i})$ is the target energy known for each datapoint $i$ upto a specified precision, and $E_M$ is the energy predicted by the model.
 
-Unfortunately this method is not suitable for recovering a minimalistic and physically relevant energy equation based on numerical data. The undesirable behavior of OLS is demonstrated on a simple example of the Lennard-Jones (LJ) potential
+Unfortunately this method is not appropriate if one needs to recover a minimalistic energy equation based on numerical data. The undesirable behavior of the OLS regression is demonstrated on a simple example of the Lennard-Jones (LJ) potential
 %
 \begin{eqnarray}
-E (R) = 4 \left( \frac{1}{R^{12}} - \frac{1}{R^{6}} \right)\label{eq:LJenergy}
+E (R) = \frac{4}{R^{12}} - \frac{4}{R^{6}} \label{eq:LJenergy}
 \end{eqnarray}
 %
-and an attempted recovery of this equation starting from Eq.~(\ref{eq:energy}) with fifteen suggested features ($M_1=15$ and $M_2=0$). OLS parameters optimized to reproduce numerical data rounded to $10^{-7}$ reduced LJ units differ from the original parameters by orders of magnitude (Figure~\ref{Fig:OLS}). The main reason for this result is that OLS parameters are redundant and are essentially tuned to reproduce numerical noise and not the important data.
+and an attempted recovery of this equation starting from Eq.~(\ref{eq:energy}) with fifteen suggested features ($M_1=15$ and $M_2=0$). If numerical data is rounded even slightly to $10^{-7}$ reduced LJ units then the optimal OLS parameters differ from the original parameters by orders of magnitude (Figure~\ref{Fig:OLS}). The main reason for this behavior is that OLS parameters are redundant and are essentially tuned to reproduce numerical noise, not the physically relevant data.
 
 %VLAD: plot coefficients powers from 1 to 15. Use bar graph, x-axis label "Power", y-axis "Coefficient, reduced LJ units".
 %-0.0240097, 0.612791, -7.043, 48.2289, -219.296, 693.937, -1594.65, 2633.41, -3107.96, 2523.57, -1273.46, 266.353, 95.1984, -72.4919, 13.6115
 
 \begin{figure}
-\includegraphics[width=0.45\textwidth]{media/LJ-OLS.eps}
-\caption{OLS fitting coefficients}\label{Fig:OLS}
+\includegraphics[width=0.45\textwidth]{media/OLS_Bar.eps}
+\caption{Optimal fitting coefficients obtained with the OLS regression to reproduce Eq.~\ref{eq:LJenergy}.} \label{Fig:OLS}
 \end{figure}
 
-To find a minimalistic and physically relevant representation of the interatomic potential designed an algorithm that finds a set of the best features while simultaneously tuning their flexible parameters --- linear coefficients in our case --- to produce the best fit. 
-The training procedure includes two stages: feature selection and fine-tuning. (ZZZ - better names?)
+This example illustrates that the task of finding a minimalistic and physically relevant representation of the intermolecular potential requires a feature selection algorithm. %that reduces a set of features while simultaneously tuning their flexible parameters --- linear coefficients in our simple case. 
+A training procedure developed in this work includes several stages: initial feature selection, further fine-tuning, and optional backward feature elimination.
 
-\subsubsection{First stage: feature selection}
+\subsubsection{First stage: initial feature selection}
 
-We explored the applicability of two methods to perform feature selection: elastic net regularization (EN) and genetic algorithm (GA). 
-While both algorithms produce almost identical results for the linear model in Eq.~(\ref{eq:energy}) the advantage of GA is that it can be easily generalized to features with nonlinear fitting coefficients (e.g. exponentially decaying functions will be included into the list of feature in the future). Furthermore, Comparison of the EN and GA performance 
+In this work, we explore the applicability of two methods to perform initial feature selection: elastic net regularization (EN) and genetic algorithm (GA). 
+While both algorithms produce almost identical results for the linear model in Eq.~(\ref{eq:energy}) the advantage of GA is that it can be easily generalized to features with nonlinear fitting coefficients. 
+For example, exponentially decaying functions can be included into the model energy function to increase its flexibility. 
+%ZZZ: Comparison of the EN and GA performance 
 
-\textit{Genetic algorithm.} In a generic genetic algorithm (GA), a population of candidate solutions to the optimization problem is evolved iteratively towards better solutions. Each solution is described by a chromosome --- a collection of genes --- that undergoes mutations and crossovers in the evolution process. In our case, the analytical form of the energy equation is the chromosome whereas each POID term of the equation represents a gene. It is worth noting that parameters $c$ in the energy equation are adjusted with conventional linear or nonlinear optimization methods, without GA.
+%ZZZ- Do we really need to have EN in the main text?
+\textbf{Elastic net}. The EN method is designed to reduce the fitting coefficients of irrelevant features precisely to zero. This is achieved by minimizing an objective function that is obtained by augmenting the OLS function with two regularization terms that penalize large coefficients: 
+%
+\begin{eqnarray}
+\Delta_{\text{EN}}(\mathbf{C}) = \Delta_{\text{OLS}}(\mathbf{C}) + \lambda_1 \vert\vert \mathbf{C} \vert\vert_1 + \lambda_2 \vert\vert \mathbf{C} \vert\vert_2^2  \label{eq:OF-EN}
+\end{eqnarray}
+%
+where $\lambda_1$, $\lambda_2$ is the regularization strength and $\vert\vert \mathbf{C} \vert\vert_k$ is the $k$-norm of vector $\mathbf{C}$ defined as
+%
+\begin{eqnarray}
+\vert\vert \mathbf{C} \vert\vert_k = \left( \sum_{i} \vert C_i \vert^k \right)^{\frac{1}{k}}  \label{eq:k-nrom}
+\end{eqnarray}
+%
+
+%ZZZ - to results: As it was mentioned if there is a group of highly correlated variables, then the LASSO selects just one variable from a group and drop the others. This is not convenient because in our case LASSO can drop important features while keeping less important one. EN can overcome this problem since it contains two penalties: linear and quadratic. By adjusting the two regularization factors, it is possible to force EN to keep dependent features in the model. Later the unnecessary features will be removed by another algorithm. Therefore, EN allows to reduce the number of features from thousands to hundreds or even less. 
+
+\textbf{Genetic algorithm.} In a generic genetic algorithm (GA), a population of candidate solutions to the optimization problem is evolved iteratively towards better solutions. Each solution is described by a chromosome --- a collection of genes --- that undergoes mutations and crossovers in the simulated evolution process. In our case, the analytical form of the energy equation is the chromosome whereas each POID term of the equation represents a gene. It is worth noting that parameters $C$ in the energy equation are adjusted with conventional optimization methods, without GA.
 
 We employed a straightforward GA. 
 The initial population of equations, all with the same number of features, is seeded randomly. 
@@ -156,29 +182,8 @@ All equations in the population are sorted according to their RMSE and the top 5
 A half of a new population is created in the crossover (45\%) and mutation (5\%) processes from elite equations while the other half is re-generated randomly. 
 In the crossover process, two equations are selected at random from the elite fraction. 60\% of random POIDs are taken from the equation with lower RMSE while the remaining 40\% of POIDs are taken from the other equation. 
 In the mutation process, between 5 and 25\% of all POIDs are selected randomly and replaced with other random POIDs. 
-The evolution stops after a preset number of generations fails to lower RMSE for the training set. Further details and numerical settings of the algorithm are presented in the Supplementary Information
+The evolution stops after a preset number of generations fails to lower RMSE for the training set. Further details and numerical settings of the algorithm are presented in the Supplementary Information.
 
-\textit{Elastic net}. Basic idea and main equation. ZZZ- Do we really need to have EN in the main text?
-
-As it was mentioned if there is a group of highly correlated variables, 
-then the LASSO selects just one variable from a group and drop the 
-others. This is not convenient because in our case LASSO can drop 
-important features while keeping less important one. EN can overcome 
-this problem since it contains two penalties: linear and quadratic. By 
-adjusting the two regularization factors, it is possible to force EN to 
-keep dependent features in the model. Later the unnecessary features 
-will be removed by another algorithm. Therefore, EN allows to reduce the 
-number of features from thousands to hundreds or even less. Next step is 
-to reduce the number of features decreased by EN to desired value. It 
-can be done by the backwards elimination algorithm (BE), which removes 
-the feature Basically, BE removes the worst (less significant feature), 
-one at a time, based on criterion provided by fitness function until the desired number of features is reached:
-
-Since after the reduction of number of features by EN the number of 
-observations is much greater than number of variables, so we can use 
-ordinary least squares (OLS) as a fitness function and the criterion 
-would be minimum squared error (MSE). BE can be used for linear and 
-nonlinear features; the only difference is different fitness functions.
 
 \subsubsection{Second stage: fine-tuning with greedy graph traversal algorithm} 
 
@@ -221,7 +226,7 @@ As any heuristic algorithm, our GTT approach is not guaranteed to find the best 
 The final number of selected features can be adjusted from the start in the GA method by changing the size of a chromosome. 
 While the final number of retained features in the EN algorithm is not known \emph{a priori} it can also be adjusted by restarting the method with different regularization strength. 
 However, in both cases, it is useful to estimate quickly how the quality of the fit depends on the number of predictors without repeating the entire training process. 
-Therefore, we implemented a fast feature elimination procedure that starts with an existing feature set, defines the worst feature as the one giving the smallest increase in fitness, then drops the worst feature from the set, and performs the final fine tuning based on the GTTA algorithm.  The elimination procedure is repeated until only one feature is left in the set.
+Therefore, we implemented a fast feature elimination procedure that starts with an existing feature set, defines the worst feature as the one giving the smallest increase in fitness, then drops the worst feature from the set, and performs the final fine tuning based on the GTTA algorithm. The elimination procedure is repeated until only one feature is left in the set.
 
 \subsection{Molecular systems and training sets} 
 
